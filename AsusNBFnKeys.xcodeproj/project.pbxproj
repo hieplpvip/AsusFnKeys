@@ -12,8 +12,6 @@
 		270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */; };
 		270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */; };
 		27F96E0216333B72003A6255 /* AsusNBFnKeys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */; };
-		4C1464A82100FD02006AB8F9 /* AsusWMIController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1464A62100FD01006AB8F9 /* AsusWMIController.cpp */; };
-		4C1464A92100FD02006AB8F9 /* AsusWMIController.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1464A72100FD01006AB8F9 /* AsusWMIController.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,8 +35,6 @@
 		27F96DFC16333B72003A6255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = AsusNBFnKeys/Info.plist; sourceTree = "<group>"; };
 		27F96E0016333B72003A6255 /* AsusNBFnKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsusNBFnKeys.h; sourceTree = "<group>"; };
 		27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AsusNBFnKeys.cpp; sourceTree = "<group>"; };
-		4C1464A62100FD01006AB8F9 /* AsusWMIController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AsusWMIController.cpp; sourceTree = "<group>"; };
-		4C1464A72100FD01006AB8F9 /* AsusWMIController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsusWMIController.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,8 +69,6 @@
 		27F96DFA16333B72003A6255 /* AsusNBFnKeys */ = {
 			isa = PBXGroup;
 			children = (
-				4C1464A62100FD01006AB8F9 /* AsusWMIController.cpp */,
-				4C1464A72100FD01006AB8F9 /* AsusWMIController.h */,
 				27F96E0016333B72003A6255 /* AsusNBFnKeys.h */,
 				27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */,
 			);
@@ -100,7 +94,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */,
-				4C1464A92100FD02006AB8F9 /* AsusWMIController.h in Headers */,
 				270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -182,7 +175,6 @@
 				27F96E0216333B72003A6255 /* AsusNBFnKeys.cpp in Sources */,
 				270DCF8D175CA27600004E6A /* FnkeysHIKeyboard.cpp in Sources */,
 				270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */,
-				4C1464A82100FD02006AB8F9 /* AsusWMIController.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
