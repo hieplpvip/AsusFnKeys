@@ -28,7 +28,7 @@
 #include <sys/errno.h>
 #include <mach/kern_return.h>
 #include <sys/kern_control.h>
-#include <IOKit/IOlib.h>
+#include <IOKit/IOLib.h>
 #include <libkern/OSTypes.h>
 
 #include  "FnKeysHIKeyboardDevice.h"
