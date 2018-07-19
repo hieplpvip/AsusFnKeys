@@ -34,7 +34,6 @@
 		270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboardDevice.cpp; sourceTree = "<group>"; };
 		270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboardDevice.h; sourceTree = "<group>"; };
 		27F96DF516333B72003A6255 /* AsusNBFnKeys.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsusNBFnKeys.kext; sourceTree = BUILT_PRODUCTS_DIR; };
-		27F96DF916333B72003A6255 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = System/Library/Frameworks/Kernel.framework; sourceTree = SDKROOT; };
 		27F96DFC16333B72003A6255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = AsusNBFnKeys/Info.plist; sourceTree = "<group>"; };
 		27F96E0016333B72003A6255 /* AsusNBFnKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsusNBFnKeys.h; sourceTree = "<group>"; };
 		27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AsusNBFnKeys.cpp; sourceTree = "<group>"; };
@@ -56,9 +55,8 @@
 		27F96DE816333B72003A6255 = {
 			isa = PBXGroup;
 			children = (
-				27F96E0916333B9F003A6255 /* FnKeysKeyboard */,
+				4C34A4B8210102B700028542 /* FnkeysHIKeyboard */,
 				27F96DFA16333B72003A6255 /* AsusNBFnKeys */,
-				27F96DF716333B72003A6255 /* Frameworks */,
 				27F96DF616333B72003A6255 /* Products */,
 				27F96DFC16333B72003A6255 /* Info.plist */,
 			);
@@ -72,22 +70,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		27F96DF716333B72003A6255 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				27F96DF816333B72003A6255 /* Other Frameworks */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		27F96DF816333B72003A6255 /* Other Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				27F96DF916333B72003A6255 /* Kernel.framework */,
-			);
-			name = "Other Frameworks";
-			sourceTree = "<group>";
-		};
 		27F96DFA16333B72003A6255 /* AsusNBFnKeys */ = {
 			isa = PBXGroup;
 			children = (
@@ -99,7 +81,7 @@
 			path = AsusNBFnKeys;
 			sourceTree = "<group>";
 		};
-		27F96E0916333B9F003A6255 /* FnKeysKeyboard */ = {
+		4C34A4B8210102B700028542 /* FnkeysHIKeyboard */ = {
 			isa = PBXGroup;
 			children = (
 				270DCF89175CA27600004E6A /* FnkeysHIKeyboard.cpp */,
@@ -107,7 +89,7 @@
 				270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */,
 				270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */,
 			);
-			name = FnKeysKeyboard;
+			path = FnkeysHIKeyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
