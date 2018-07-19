@@ -2,7 +2,7 @@
  *  Copyright (c) 2012 - 2013 EMlyDinEsH(OSXLatitude). All rights reserved.
  *
  *
- *  AsusNBFnKeys.h
+ *  AsusFnKeys.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _AsusNBFnKeys_h
-#define _AsusNBFnKeys_h
+#ifndef _AsusFnKeys_h
+#define _AsusFnKeys_h
 
 #include <IOKit/pwr_mgt/IOPMPowerSource.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
@@ -170,9 +170,9 @@ const UInt8 NOTIFY_BRIGHTNESS_UP_MAX = 0x1F;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MIN = 0x20;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 
-class AsusNBFnKeys : public IOService
+class AsusFnKeys : public IOService
 {
-    OSDeclareDefaultStructors(AsusNBFnKeys)
+    OSDeclareDefaultStructors(AsusFnKeys)
     
 protected:
     IOACPIPlatformDevice * WMIDevice;
@@ -239,4 +239,4 @@ private:
     
 };
 
-#endif //_AsusNBFnKeys_h
+#endif //_AsusFnKeys_h

@@ -22,7 +22,7 @@
 
 
 #include "FnKeysHIKeyboardDevice.h"
-#include "AsusNBFnKeys.h"
+#include "AsusFnKeys.h"
 
 #define DEBUG_START 0
 
@@ -40,7 +40,7 @@ bool FnKeysHIKeyboardDevice::attach( IOService * provider )
 {
 	if( !super::attach(provider) )  return false;
 	
-	FnKeys = OSDynamicCast(AsusNBFnKeys ,provider);
+	FnKeys = OSDynamicCast(AsusFnKeys ,provider);
 	if (NULL == FnKeys)
 		return false;
 	

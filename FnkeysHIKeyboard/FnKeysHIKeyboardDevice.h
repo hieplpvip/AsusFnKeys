@@ -34,14 +34,14 @@ typedef struct  {
 
 
 
-class AsusNBFnKeys;
+class AsusFnKeys;
 
 class FnKeysHIKeyboardDevice : public IOService
 {
 	OSDeclareDefaultStructors(FnKeysHIKeyboardDevice);
 	
 private:
-	AsusNBFnKeys *FnKeys;
+	AsusFnKeys *FnKeys;
 	
 public:
 	virtual bool attach(IOService * provider);

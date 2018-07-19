@@ -11,7 +11,7 @@
 		270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */; };
 		270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */; };
 		270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */; };
-		27F96E0216333B72003A6255 /* AsusNBFnKeys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */; };
+		27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 27F96E0116333B72003A6255 /* AsusFnKeys.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,10 +31,10 @@
 		270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboard.h; sourceTree = "<group>"; };
 		270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboardDevice.cpp; sourceTree = "<group>"; };
 		270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboardDevice.h; sourceTree = "<group>"; };
-		27F96DF516333B72003A6255 /* AsusNBFnKeys.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsusNBFnKeys.kext; sourceTree = BUILT_PRODUCTS_DIR; };
-		27F96DFC16333B72003A6255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = AsusNBFnKeys/Info.plist; sourceTree = "<group>"; };
-		27F96E0016333B72003A6255 /* AsusNBFnKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsusNBFnKeys.h; sourceTree = "<group>"; };
-		27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AsusNBFnKeys.cpp; sourceTree = "<group>"; };
+		27F96DF516333B72003A6255 /* AsusFnKeys.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsusFnKeys.kext; sourceTree = BUILT_PRODUCTS_DIR; };
+		27F96DFC16333B72003A6255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = AsusFnKeys/Info.plist; sourceTree = "<group>"; };
+		27F96E0016333B72003A6255 /* AsusFnKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsusFnKeys.h; sourceTree = "<group>"; };
+		27F96E0116333B72003A6255 /* AsusFnKeys.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AsusFnKeys.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				4C34A4B8210102B700028542 /* FnkeysHIKeyboard */,
-				27F96DFA16333B72003A6255 /* AsusNBFnKeys */,
+				27F96DFA16333B72003A6255 /* AsusFnKeys */,
 				27F96DF616333B72003A6255 /* Products */,
 				27F96DFC16333B72003A6255 /* Info.plist */,
 			);
@@ -61,18 +61,18 @@
 		27F96DF616333B72003A6255 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				27F96DF516333B72003A6255 /* AsusNBFnKeys.kext */,
+				27F96DF516333B72003A6255 /* AsusFnKeys.kext */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		27F96DFA16333B72003A6255 /* AsusNBFnKeys */ = {
+		27F96DFA16333B72003A6255 /* AsusFnKeys */ = {
 			isa = PBXGroup;
 			children = (
-				27F96E0016333B72003A6255 /* AsusNBFnKeys.h */,
-				27F96E0116333B72003A6255 /* AsusNBFnKeys.cpp */,
+				27F96E0016333B72003A6255 /* AsusFnKeys.h */,
+				27F96E0116333B72003A6255 /* AsusFnKeys.cpp */,
 			);
-			path = AsusNBFnKeys;
+			path = AsusFnKeys;
 			sourceTree = "<group>";
 		};
 		4C34A4B8210102B700028542 /* FnkeysHIKeyboard */ = {
@@ -101,9 +101,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		27F96DF416333B72003A6255 /* AsusNBFnKeys */ = {
+		27F96DF416333B72003A6255 /* AsusFnKeys */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 27F96E0616333B72003A6255 /* Build configuration list for PBXNativeTarget "AsusNBFnKeys" */;
+			buildConfigurationList = 27F96E0616333B72003A6255 /* Build configuration list for PBXNativeTarget "AsusFnKeys" */;
 			buildPhases = (
 				27F96DEF16333B72003A6255 /* Sources */,
 				27F96DF016333B72003A6255 /* Frameworks */,
@@ -116,9 +116,9 @@
 			);
 			dependencies = (
 			);
-			name = AsusNBFnKeys;
+			name = AsusFnKeys;
 			productName = AsusNBWMI;
-			productReference = 27F96DF516333B72003A6255 /* AsusNBFnKeys.kext */;
+			productReference = 27F96DF516333B72003A6255 /* AsusFnKeys.kext */;
 			productType = "com.apple.product-type.kernel-extension";
 		};
 /* End PBXNativeTarget section */
@@ -130,7 +130,7 @@
 				LastUpgradeCheck = 0450;
 				ORGANIZATIONNAME = Apple;
 			};
-			buildConfigurationList = 27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusNBFnKeys" */;
+			buildConfigurationList = 27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusFnKeys" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -142,7 +142,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				27F96DF416333B72003A6255 /* AsusNBFnKeys */,
+				27F96DF416333B72003A6255 /* AsusFnKeys */,
 			);
 		};
 /* End PBXProject section */
@@ -172,7 +172,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27F96E0216333B72003A6255 /* AsusNBFnKeys.cpp in Sources */,
+				27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */,
 				270DCF8D175CA27600004E6A /* FnkeysHIKeyboard.cpp in Sources */,
 				270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */,
 			);
@@ -231,10 +231,10 @@
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;
-				INFOPLIST_FILE = AsusNBFnKeys/Info.plist;
-				MODULE_NAME = com.apple.AsusNBFnKeys;
+				INFOPLIST_FILE = AsusFnKeys/Info.plist;
+				MODULE_NAME = com.apple.AsusFnKeys;
 				OTHER_CPLUSPLUSFLAGS = "-Wno-inconsistent-missing-override";
-				PRODUCT_NAME = AsusNBFnKeys;
+				PRODUCT_NAME = AsusFnKeys;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Debug;
@@ -244,10 +244,10 @@
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0d1;
-				INFOPLIST_FILE = AsusNBFnKeys/Info.plist;
-				MODULE_NAME = com.apple.AsusNBFnKeys;
+				INFOPLIST_FILE = AsusFnKeys/Info.plist;
+				MODULE_NAME = com.apple.AsusFnKeys;
 				OTHER_CPLUSPLUSFLAGS = "-Wno-inconsistent-missing-override";
-				PRODUCT_NAME = AsusNBFnKeys;
+				PRODUCT_NAME = AsusFnKeys;
 				WRAPPER_EXTENSION = kext;
 			};
 			name = Release;
@@ -255,7 +255,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusNBFnKeys" */ = {
+		27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusFnKeys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				27F96E0416333B72003A6255 /* Debug */,
@@ -264,7 +264,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		27F96E0616333B72003A6255 /* Build configuration list for PBXNativeTarget "AsusNBFnKeys" */ = {
+		27F96E0616333B72003A6255 /* Build configuration list for PBXNativeTarget "AsusFnKeys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				27F96E0716333B72003A6255 /* Debug */,
