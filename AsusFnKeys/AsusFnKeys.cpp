@@ -1,9 +1,10 @@
 /*
  *  Copyright (c) 2012 - 2013 EMlyDinEsH(OSXLatitude). All rights reserved.
+ *  Copyright (c) 2018 hieplpvip
  *
- *  Asus Notebooks Fn keys Driver v1.7.2 by EMlyDinEsH for Mac OSX
+ *  Asus Fn keys Driver v1.0.0 by hieplpvip for macOS 10.13
  *
- *  Credits: Hotkoffy(insanelymac) for initial source
+ *  Credits: EMlyDinEsH(OSXLatitude) for initial driver
  *
  *  AsusFnKeys.cpp
  *  
@@ -1071,9 +1072,6 @@ void AsusFnKeys::enableEvent()
         {
             _keyboardDevice->setKeyMap(keyMap);
             _keyboardDevice->registerService();
-            
-            IOLog("Asus notebooks Backlight Driver v1.7.2 by EMlyDinEsH(OSXLatitude) Copyright (c) 2012-2013, Credits:Hotkoffy(insanelymac)\n");
-            
             
             //Setting Touchpad state on startup
             setProperty("TouchpadEnabled", true);

@@ -1,5 +1,6 @@
 /*
  *  Copyright (c) 2012 - 2013 EMlyDinEsH(OSXLatitude). All rights reserved.
+ *  Copyright (c) 2018 hieplpvip
  *
  *
  *  AsusFnKeys.h
