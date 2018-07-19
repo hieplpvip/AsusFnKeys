@@ -26,7 +26,7 @@
 	<string>1.7.2</string>
 	<key>IOKitPersonalities</key>
 	<dict>
-		<key>AsusWMIController</key>
+		<key>AsusFnKeys</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
 			<string>com.apple.${PRODUCT_NAME:rfc1034identifier}</string>
@@ -50,7 +50,7 @@
 			<key>Preferences</key>
 			<dict>
 				<key>HasKeyboardBLight</key>
-				<false/>
+				<true/>
 				<key>HasALSensor</key>
 				<false/>
 				<key>ALS Turned on at boot</key>
@@ -58,8 +58,6 @@
 				<key>KeyboardBLightLevelAtBoot</key>
 				<integer>1</integer>
 				<key>HasMediaButtons</key>
-				<true/>
-				<key>UsingAsusBackLightDriver</key>
 				<false/>
 			</dict>
 		</dict>

@@ -137,7 +137,7 @@
 OSDefineMetaClassAndStructors(AsusWMIController, AsusNBFnKeys)
 
 
-bool       AsusWMIController::init(OSDictionary *dictionary)
+bool AsusWMIController::init(OSDictionary *dictionary)
 {
 
     keybrdBLightLvl = 0;//Stating with Zero Level
@@ -149,26 +149,10 @@ bool       AsusWMIController::init(OSDictionary *dictionary)
     isALSenabled  = true;
     isPanelBackLightOn = true;
     
-    hasKeybrdBLight =false;
+    hasKeybrdBLight = false;
     hasMediaButtons = true;
 	return super::init(dictionary);
 }
-
-bool       AsusWMIController::start(IOService *provider)
-{
-    	return super::start(provider);
-}
-
-void       AsusWMIController::stop(IOService *provider)
-{
-	super::stop(provider);
-}
-
-void       AsusWMIController::free(void)
-{
-	super::free();
-}
-
 
 IOService * AsusWMIController::probe(IOService *provider, SInt32 *score )
 {
@@ -271,9 +255,6 @@ IOService * AsusWMIController::probe(IOService *provider, SInt32 *score )
                     
                     else if(!strncmp(dictKey->getCStringNoCopy(),"HasALSensor",strlen(tmpStr)))
                         hasALSensor = tmpBool;
-                    
-                    else if(!strncmp(dictKey->getCStringNoCopy(),"UsingAsusBackLightDriver",strlen(tmpStr)))
-                        hasAsusBackLightDriver = tmpBool;
                     
                     else if(!strncmp(dictKey->getCStringNoCopy(),"ALS Turned on at boot",strlen(tmpStr)))
                         alsAtBoot = tmpBool;
@@ -431,25 +412,21 @@ void AsusWMIController::handleMessage(int code)
         case 0x33://hardwired On
         case 0x34://hardwired Off
         case 0x35://Soft Event, Fn + F7
-            if(!hasAsusBackLightDriver)
+            if(isPanelBackLightOn)
             {
-                if(isPanelBackLightOn)
-                {
-                    code = NOTIFY_BRIGHTNESS_DOWN_MIN;
-                    loopCount = 16;
-                    
-                    //Read Panel brigthness value to restore later with backlight toggle
-                    ReadPanelBrightnessValue();
-                }
-                else
-                {
-                    code = NOTIFY_BRIGHTNESS_UP_MIN;
-                    loopCount = panelBrighntessLevel;
-                }
+                code = NOTIFY_BRIGHTNESS_DOWN_MIN;
+                loopCount = 16;
                 
-                isPanelBackLightOn = !isPanelBackLightOn;
-                
+                //Read Panel brigthness value to restore later with backlight toggle
+                ReadPanelBrightnessValue();
             }
+            else
+            {
+                code = NOTIFY_BRIGHTNESS_UP_MIN;
+                loopCount = panelBrighntessLevel;
+            }
+            
+            isPanelBackLightOn = !isPanelBackLightOn;
 			break;
 			
 		case 0x6B: //Fn + F9, Tochpad On/Off
@@ -545,66 +522,20 @@ void AsusWMIController::handleMessage(int code)
 		default:
             //Fn + F5, Panel Brightness Down
             if(code >= NOTIFY_BRIGHTNESS_DOWN_MIN && code<= NOTIFY_BRIGHTNESS_DOWN_MAX)
-                {
-                    code = NOTIFY_BRIGHTNESS_DOWN_MIN;
+            {
+                code = NOTIFY_BRIGHTNESS_DOWN_MIN;
                     
-                    if(panelBrighntessLevel > 0)
-                    panelBrighntessLevel--;
-                }
+                if(panelBrighntessLevel > 0)
+                panelBrighntessLevel--;
+            }
             //Fn + F6, Panel Brightness Up
             else if(code >= NOTIFY_BRIGHTNESS_UP_MIN && code<= NOTIFY_BRIGHTNESS_UP_MAX)
-                {
-                    code = NOTIFY_BRIGHTNESS_UP_MIN;
-                    
-                    panelBrighntessLevel++;
-                    if(panelBrighntessLevel>16)
-                        panelBrighntessLevel = 16;
-                }
-            
-            if(hasAsusBackLightDriver)
             {
-            //
-            //Reading AppleBezel Values from Asus Backlight Panel driver for controlling the bezel levels
-            //                              
-            
-              IORegistryEntry *fnDeviceEntry = IORegistryEntry::fromPath("IOService:/AppleACPIPlatformExpert/PNLF/AsusACPIBacklightPanel");
-                if (fnDeviceEntry != NULL) {
+                code = NOTIFY_BRIGHTNESS_UP_MIN;
                 
-                    OSNumber *tmpNum = 0;
-                    tmpNum = OSDynamicCast(OSNumber, fnDeviceEntry->getProperty("AppleBezelLevel"));
-                    
-                    appleBezelValue = tmpNum->unsigned32BitValue();
-                    
-                    asusBackLightMode = true;
-                                        
-                    if(code == NOTIFY_BRIGHTNESS_UP_MIN)//going up
-                        {
-                            
-                            if(appleBezelValue<8)//we're in between level 0-7
-                                loopCount = 1;
-                            else if(appleBezelValue == 8)//we're doing level 9
-                                loopCount = 2;
-                            else if(appleBezelValue == 9 || appleBezelValue == 10)//we're going level 10/11
-                                loopCount = 3;
-                            
-                       }
-                       else//going down
-                       {
-                                appleBezelValue--;
-                           
-                            //we're going level 10/9 we receive 11 for both 11 & 10 levels
-                            if(appleBezelValue == 10 || appleBezelValue == 9)
-                                loopCount = 3;
-                            else if(appleBezelValue == 8)//we're doing level 8
-                                loopCount = 2;
-                            else //we're going level <8
-                                loopCount = 1;
-                       }
-                    //IOLog("AsusNBFnKeys: Device Entry Found %d AM %d\n",appleBezelValue, asusBackLightMode);
-                  
-                    fnDeviceEntry->release();
-                }
-             
+                panelBrighntessLevel++;
+                if(panelBrighntessLevel>16)
+                    panelBrighntessLevel = 16;
             }
             break;
     }
@@ -698,13 +629,3 @@ void AsusWMIController::keyboardBackLightEvent(UInt32 level)
     WMIDevice->evaluateObject("SKBL", &ret, params,1);
     
 }
-//Keyboard Backlight Alternate
-/*void AsusWMIController::keyboardBackLightEvent()
- {
- UInt32 status = -1;
- getDeviceStatus(ASUS_NB_WMI_EVENT_GUID, ASUS_WMI_METHODID_DSTS2, ASUS_WMI_DEVID_KBD_BACKLIGHT, &status);
- status = (status & 0x0001) xor 1;
- setDeviceStatus(ASUS_NB_WMI_EVENT_GUID, ASUS_WMI_METHODID_DEVS, ASUS_WMI_DEVID_KBD_BACKLIGHT, &status);
-     IOLog("AsusNBFnKeys: Keyboard Backlight\n");
-
- }*/

@@ -42,9 +42,6 @@ class AsusWMIController : public AsusNBFnKeys
 	
 public:
 	virtual bool       init(OSDictionary *dictionary = 0);
-	virtual bool       start(IOService *provider);
-	virtual void       stop(IOService *provider);
-	virtual void       free(void);
 	virtual IOService * probe(IOService *provider, SInt32 *score );
 	
 protected:
@@ -52,7 +49,7 @@ protected:
     UInt32 keybrdBLightLvl, curKeybrdBlvl, panelBrighntessLevel, appleBezelValue;
     bool   tochpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
-    bool   asusBackLightMode, hasAsusBackLightDriver;
+    bool   asusBackLightMode;
     bool   isPanelBackLightOn;
     bool   hasMediaButtons, hasKeybrdBLight;
     int loopCount, kLoopCount;
