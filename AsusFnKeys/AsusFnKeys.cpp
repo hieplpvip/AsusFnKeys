@@ -370,6 +370,8 @@ bool AsusFnKeys::init(OSDictionary *dict)
     hasKeybrdBLight = false;
     hasMediaButtons = true;
     
+    _notificationServices = OSSet::withCapacity(1);
+    
 	bool result = super::init(dict);
 	properties = dict;
     DEBUG_LOG("%s:\n", this->getName());
@@ -491,6 +493,7 @@ void AsusFnKeys::stop(IOService *provider)
     _terminateNotify->remove();
     OSSafeReleaseNULL(_publishNotify);
     OSSafeReleaseNULL(_terminateNotify);
+    _notificationServices->flushCollection();
     OSSafeReleaseNULL(_notificationServices);
     
 	super::stop(provider);
@@ -527,21 +530,22 @@ bool AsusFnKeys::start(IOService *provider)
 	
 	this->registerService(0);
     
-    _notificationServices = OSSet::withCapacity(1);
     OSDictionary * propertyMatch = propertyMatching(OSSymbol::withCString(kDeliverNotifications), OSBoolean::withBoolean(true));
+    
+    IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &AsusFnKeys::notificationHandler);
     
     //
     // Register notifications for availability of any IOService objects wanting to consume our message events
     //
     _publishNotify = addMatchingNotification(gIOFirstPublishNotification,
                                              propertyMatch,
-                                             &notificationHandler,
+                                             notificationHandler,
                                              this,
                                              0, 10000);
     
     _terminateNotify = addMatchingNotification(gIOTerminatedNotification,
                                                propertyMatch,
-                                               &notificationHandler,
+                                               notificationHandler,
                                                this,
                                                0, 10000);
     
@@ -578,7 +582,12 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *p
 
 IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 {
-	if (type == kIOACPIMessageDeviceNotification)
+    if (type == kKeyboardKeyPressTime)
+    {
+        keytime = *((uint64_t*)argument);
+        IOLog("%s: keyPressed = %llu\n", getName(), keytime);
+    }
+	else if (type == kIOACPIMessageDeviceNotification)
 	{
 		UInt32 event = *((UInt32 *) argument);
 		OSObject * wed;
@@ -618,7 +627,7 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 	}
 	else
 	{	// Someone unexpected is sending us messages!
-		DEBUG_LOG("%s: Unexpected message, Type %x Provider %s \n", this->getName(), uint(type), provider->getName());
+		DEBUG_LOG("%s: Unexpected message, Type %x Provider %s \n", getName(), uint(type), provider->getName());
 	}
 	
 	return kIOReturnSuccess;
@@ -1168,18 +1177,16 @@ void AsusFnKeys::disableEvent()
 #pragma mark Notification methods
 #pragma mark -
 
-bool AsusFnKeys::notificationHandler(void * target, void * ref, IOService * service, IONotifier * notifier)
+bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier)
 {
-    AsusFnKeys* self = (AsusFnKeys*)target;
-    
-    if (notifier == self->_publishNotify) {
-        IOLog("%s: Notification consumer published: %s\n", self->getName(), service->getName());
-        self->_notificationServices->setObject(service);
+    if (notifier == _publishNotify) {
+        IOLog("%s: Notification consumer published: %s\n", getName(), newService->getName());
+        _notificationServices->setObject(newService);
     }
     
-    if (notifier == self->_terminateNotify) {
-        IOLog("%s: Notification consumer terminated: %s\n", self->getName(), service->getName());
-        self->_notificationServices->removeObject(service);
+    if (notifier == _terminateNotify) {
+        IOLog("%s: Notification consumer terminated: %s\n", getName(), newService->getName());
+        _notificationServices->removeObject(newService);
     }
     
     return true;

@@ -195,8 +195,7 @@ protected:
     OSDictionary * properties;
     
 public:
-    IOReturn message( UInt32 type, IOService * provider, void * argument);
-    IOReturn poller( void );
+    virtual IOReturn message(UInt32 type, IOService * provider, void * argument);
     
     // standard IOKit methods
     virtual bool       init(OSDictionary *dictionary = 0);
@@ -227,13 +226,14 @@ protected:
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDevice(const char * guid, UInt32 methodId, UInt32 *status);
     
-    static bool notificationHandler(void* target, void* ref_con, IOService* service, IONotifier* notifier);
+    bool notificationHandler(void * refCon, IOService * newService, IONotifier * notifier);
     void dispatchMessage(int message, void* data);
     
     static const FnKeysKeyMap keyMap[];
     
     UInt8 keybrdBLightLvl, curKeybrdBlvl;
     UInt32 panelBrightnessLevel;
+    uint64_t keytime = 0;
     bool   touchpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
     bool   isPanelBackLightOn;
