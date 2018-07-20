@@ -23,13 +23,15 @@
 #ifndef _AsusFnKeys_h
 #define _AsusFnKeys_h
 
+#include <IOKit/hidsystem/ev_keymap.h>
 #include <IOKit/pwr_mgt/IOPMPowerSource.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 #include <IOKit/IOService.h>
+#include <IOKit/IONVRAM.h>
+#include <IOKit/IOLib.h>
 #include <sys/errno.h>
 #include <mach/kern_return.h>
 #include <sys/kern_control.h>
-#include <IOKit/IOLib.h>
 #include <libkern/OSTypes.h>
 
 #include  "FnKeysHIKeyboardDevice.h"
@@ -171,6 +173,9 @@ const UInt8 NOTIFY_BRIGHTNESS_UP_MAX = 0x1F;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MIN = 0x20;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 
+#define MS_TO_NS(ms) (1000ULL * 1000ULL * (ms))
+#define kAsusKeyboardBacklight "asus-keyboard-backlight"
+
 class AsusFnKeys : public IOService
 {
     OSDeclareDefaultStructors(AsusFnKeys)
@@ -200,13 +205,15 @@ protected:
     IOReturn enableFnKeyEvents(const char * guid, UInt32 methodID);
     
     
-    virtual void enableEvent();
-    virtual void disableEvent();
-    virtual void handleMessage(int code);
-    virtual void processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount);
-    virtual UInt32 processALS();
-    virtual void keyboardBackLightEvent(UInt32 level);
-    virtual void ReadPanelBrightnessValue();
+    void enableEvent();
+    void disableEvent();
+    void handleMessage(int code);
+    void processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount);
+    UInt32 processALS();
+    void setKeyboardBackLight(UInt8 level);
+    void readPanelBrightnessValue();
+    void saveKBBacklightToNVRAM(UInt8 level);
+    UInt8 loadKBBacklightFromNVRAM();
     
     void getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
@@ -214,7 +221,8 @@ protected:
     
     static const FnKeysKeyMap keyMap[];
     
-    UInt32 keybrdBLightLvl, curKeybrdBlvl, panelBrighntessLevel, appleBezelValue;
+    UInt8 keybrdBLightLvl, curKeybrdBlvl;
+    UInt32 panelBrighntessLevel;
     bool   tochpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
     bool   isPanelBackLightOn;

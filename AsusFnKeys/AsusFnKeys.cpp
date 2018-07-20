@@ -24,8 +24,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <IOKit/hidsystem/ev_keymap.h>
-
 #include "AsusFnKeys.h"
 
 #define DEBUG_START 0
@@ -424,7 +422,7 @@ IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
         OSBoolean *tmpBoolean = FALSE;
         OSData   *tmpObj = 0;
         bool tmpBool = false;
-        UInt64 tmpUI64 = 0;
+        UInt8 tmpUI8 = 0;
         
         OSIterator *iter = 0;
         const OSSymbol *dictKey = 0;
@@ -441,8 +439,8 @@ IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
                 
                 tmpNumber = OSDynamicCast(OSNumber, Configuration->getObject(dictKey));
                 if (tmpNumber) {
-                    tmpUI64 = tmpNumber->unsigned64BitValue();
-                    tmpObj = OSData::withBytes(&tmpUI64, sizeof(UInt32));
+                    tmpUI8 = tmpNumber->unsigned8BitValue();
+                    tmpObj = OSData::withBytes(&tmpUI8, sizeof(UInt8));
                 }
                 
                 tmpBoolean = OSDynamicCast(OSBoolean, Configuration->getObject(dictKey));
@@ -457,19 +455,11 @@ IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
                     tmpObj = tmpData;
                 }
                 if (tmpObj) {
-                    //provider->setProperty(dictKey, tmpObj);
-                    /*if(tmpUI64>0)
-                     setProperty(dictKey->getCStringNoCopy(), tmpUI64 ,64);
-                     else
-                     setProperty(dictKey->getCStringNoCopy(), tmpBool?1:0 ,32);*/
-                    
                     const char *tmpStr = dictKey->getCStringNoCopy();
-                    
                     
                     if(!strncmp(dictKey->getCStringNoCopy(),"KeyboardBLightLevelAtBoot", strlen(tmpStr)))
                     {
-                        keybrdBLightLvl = (UInt32)tmpUI64;
-                        tmpUI64 = 0;
+                        keybrdBLightLvl = tmpUI8;
                     }
                     else if(!strncmp(dictKey->getCStringNoCopy(),"HasKeyboardBLight",strlen(tmpStr)))
                         hasKeybrdBLight = tmpBool;
@@ -482,7 +472,6 @@ IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
                     
                     else if(!strncmp(dictKey->getCStringNoCopy(),"ALS Turned on at boot",strlen(tmpStr)))
                         alsAtBoot = tmpBool;
-                    
                 }
             }
         }
@@ -631,7 +620,7 @@ void AsusFnKeys::handleMessage(int code)
                 loopCount = 16;
                 
                 //Read Panel brigthness value to restore later with backlight toggle
-                ReadPanelBrightnessValue();
+                readPanelBrightnessValue();
             }
             else
             {
@@ -704,12 +693,7 @@ void AsusFnKeys::handleMessage(int code)
                 else
                     keybrdBLightLvl = 0;
                 
-                keyboardBackLightEvent(keybrdBLightLvl);
-                
-                curKeybrdBlvl  = keybrdBLightLvl;
-                
-                //Updating value in ioregistry
-                setProperty("KeyboardBLightLevel", keybrdBLightLvl,32);
+                setKeyboardBackLight(keybrdBLightLvl);
             }
             
             break;
@@ -722,12 +706,7 @@ void AsusFnKeys::handleMessage(int code)
                 else
                     keybrdBLightLvl++;
                 
-                keyboardBackLightEvent(keybrdBLightLvl);
-                
-                curKeybrdBlvl  = keybrdBLightLvl;
-                
-                //Updating value in ioregistry
-                setProperty("KeyboardBLightLevel", keybrdBLightLvl,32);
+                setKeyboardBackLight(keybrdBLightLvl);
             }
             
             break;
@@ -794,7 +773,7 @@ void AsusFnKeys::processFnKeyEvents(int code, bool alsMode, int kLoopCount, int 
 
 UInt32 AsusFnKeys::processALS()
 {
-    UInt32 brightnessLvlcode;
+    /*UInt32 brightnessLvlcode;
     keybrdBLightLvl = 0;
     
     WMIDevice->evaluateInteger("ALSS", &keybrdBLightLvl, NULL, NULL);
@@ -848,23 +827,32 @@ UInt32 AsusFnKeys::processALS()
     
     curKeybrdBlvl = keybrdBLightLvl;
     
-    return brightnessLvlcode;
+    return brightnessLvlcode; */
+    return 0xC6;
 }
 
 //Keyboard Backlight set
-void AsusFnKeys::keyboardBackLightEvent(UInt32 level)
+void AsusFnKeys::setKeyboardBackLight(UInt8 level)
 {
     OSObject * params[1];
     OSObject * ret = NULL;
     
-    params[0] = OSNumber::withNumber(level,8);
+    params[0] = OSNumber::withNumber(level, sizeof(level)*8);
     
     //Asus WMI Specific Method Inside the DSDT
     //Calling the Method SLKB from the DSDT For setting Keyboard Backlight control in DSDT
-    WMIDevice->evaluateObject("SKBL", &ret, params,1);
+    WMIDevice->evaluateObject("SKBL", &ret, params, 1);
+    
+    //Save level to NVRAM
+    saveKBBacklightToNVRAM(level);
+    
+    curKeybrdBlvl = level;
+    
+    //Updating value in ioregistry
+    setProperty("KeyboardBLightLevel", level, sizeof(level)*8);
 }
 
-void AsusFnKeys::ReadPanelBrightnessValue()
+void AsusFnKeys::readPanelBrightnessValue()
 {
     //
     //Reading AppleBezel Values from Apple Backlight Panel driver for controlling the bezel levels
@@ -895,7 +883,6 @@ void AsusFnKeys::ReadPanelBrightnessValue()
                 {
                     while((dicKey = (const OSSymbol *)brightnessIter->getNextObject()))
                     {
-                        
                         //IOLog("AsusFnKeys: Brightness %s\n",dicKey->getCStringNoCopy());
                         brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject(dicKey));
                         
@@ -910,6 +897,65 @@ void AsusFnKeys::ReadPanelBrightnessValue()
             }
         }
     }
+}
+
+void AsusFnKeys::saveKBBacklightToNVRAM(UInt8 level)
+{
+    if (IORegistryEntry *nvram = OSDynamicCast(IORegistryEntry, fromPath("/options", gIODTPlane)))
+    {
+        if (const OSSymbol* symbol = OSSymbol::withCString(kAsusKeyboardBacklight))
+        {
+            if (OSData* number = OSData::withBytes(&level, sizeof(level)))
+            {
+                if (!nvram->setProperty(symbol, number))
+                    DEBUG_LOG("nvram->setProperty failed\n");
+                number->release();
+            }
+            symbol->release();
+        }
+        nvram->release();
+    }
+}
+
+UInt8 AsusFnKeys::loadKBBacklightFromNVRAM(void)
+{
+    IORegistryEntry* nvram = IORegistryEntry::fromPath("/chosen/nvram", gIODTPlane);
+    if (!nvram)
+    {
+        DEBUG_LOG("no /chosen/nvram, trying IODTNVRAM\n");
+        // probably booting w/ Clover
+        if (OSDictionary* matching = serviceMatching("IODTNVRAM"))
+        {
+            nvram = waitForMatchingService(matching, MS_TO_NS(15000));
+            matching->release();
+        }
+    }
+    else DEBUG_LOG("have nvram from /chosen/nvram\n");
+    UInt8 val = 100;
+    if (nvram)
+    {
+        // need to serialize as getProperty on nvram does not work
+        if (OSSerialize* serial = OSSerialize::withCapacity(0))
+        {
+            nvram->serializeProperties(serial);
+            if (OSDictionary* props = OSDynamicCast(OSDictionary, OSUnserializeXML(serial->text())))
+            {
+                if (OSData* number = OSDynamicCast(OSData, props->getObject(kAsusKeyboardBacklight)))
+                {
+                    val = 0;
+                    unsigned l = number->getLength();
+                    if (l <= sizeof(val))
+                        memcpy(&val, number->getBytesNoCopy(), l);
+                    DEBUG_LOG("read level from nvram = %d\n", val);
+                }
+                else DEBUG_LOG("no %s in nvram\n", kAsusKeyboardBacklight);
+                props->release();
+            }
+            serial->release();
+        }
+        nvram->release();
+    }
+    return val;
 }
 
 void AsusFnKeys::getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status)
@@ -1076,10 +1122,14 @@ void AsusFnKeys::enableEvent()
             //Setting Touchpad state on startup
             setProperty("TouchpadEnabled", true);
             
-            /**** Keyboard brightness level at boot
-             ***** Calling the keyboardBacklight Event for Setting the Backlight at boot ***/
+            // Load keyboard backlight level from NVRAM
+            UInt8 tmp = loadKBBacklightFromNVRAM();
+            if(tmp != 100)
+                keybrdBLightLvl = tmp;
+            
+            //Calling the keyboardBacklight Event for Setting the Backlight
             if(hasKeybrdBLight)
-                keyboardBackLightEvent(keybrdBLightLvl);
+                setKeyboardBackLight(keybrdBLightLvl);
             
             curKeybrdBlvl = keybrdBLightLvl;
             
