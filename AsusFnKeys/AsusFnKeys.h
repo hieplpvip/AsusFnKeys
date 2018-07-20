@@ -233,7 +233,7 @@ protected:
     static const FnKeysKeyMap keyMap[];
     
     UInt8 keybrdBLightLvl, curKeybrdBlvl;
-    UInt32 panelBrighntessLevel;
+    UInt32 panelBrightnessLevel;
     bool   touchpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
     bool   isPanelBackLightOn;

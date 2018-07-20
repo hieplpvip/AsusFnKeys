@@ -359,7 +359,7 @@ const FnKeysKeyMap AsusFnKeys::keyMap[] = {
 bool AsusFnKeys::init(OSDictionary *dict)
 {
     keybrdBLightLvl = 0; //Stating with Zero Level
-    panelBrighntessLevel = 16; //Mac starts with level 16
+    panelBrightnessLevel = 16; //Mac starts with level 16
     res = 0;
     
     touchpadEnabled = true; //touch enabled by default on startup
@@ -651,7 +651,7 @@ void AsusFnKeys::handleMessage(int code)
             else
             {
                 code = NOTIFY_BRIGHTNESS_UP_MIN;
-                loopCount = panelBrighntessLevel;
+                loopCount = panelBrightnessLevel;
             }
             
             isPanelBackLightOn = !isPanelBackLightOn;
@@ -663,13 +663,13 @@ void AsusFnKeys::handleMessage(int code)
             {
                 setProperty("TouchpadEnabled", true);
                 removeProperty("TouchpadDisabled");
-                IOLog("%s: Touchpad Enabled\n", getName());
+                DEBUG_LOG("%s: Touchpad Enabled\n", getName());
             }
             else
             {
                 removeProperty("TouchpadEnabled");
                 setProperty("TouchpadDisabled", true);
-                IOLog("%s: Touchpad Disabled\n", getName());
+                DEBUG_LOG("%s: Touchpad Disabled\n", getName());
             }
             
             //send to 3rd party drivers
@@ -746,17 +746,17 @@ void AsusFnKeys::handleMessage(int code)
             {
                 code = NOTIFY_BRIGHTNESS_DOWN_MIN;
                 
-                if(panelBrighntessLevel > 0)
-                    panelBrighntessLevel--;
+                if(panelBrightnessLevel > 0)
+                    panelBrightnessLevel--;
             }
             //Fn + F6, Panel Brightness Up
             else if(code >= NOTIFY_BRIGHTNESS_UP_MIN && code<= NOTIFY_BRIGHTNESS_UP_MAX)
             {
                 code = NOTIFY_BRIGHTNESS_UP_MIN;
                 
-                panelBrighntessLevel++;
-                if(panelBrighntessLevel>16)
-                    panelBrighntessLevel = 16;
+                panelBrightnessLevel++;
+                if(panelBrightnessLevel>16)
+                    panelBrightnessLevel = 16;
             }
             break;
     }
@@ -802,12 +802,11 @@ void AsusFnKeys::processFnKeyEvents(int code, bool alsMode, int kLoopCount, int 
 
 UInt32 AsusFnKeys::processALS()
 {
+    UInt32 alsValue = 0;
+    WMIDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
+    DEBUG_LOG("%s: ALS %d\n", getName(), alsValue);
+    
     /*UInt32 brightnessLvlcode;
-    keybrdBLightLvl = 0;
-    
-    WMIDevice->evaluateInteger("ALSS", &keybrdBLightLvl, NULL, NULL);
-    //IOLog("%s: ALS %d\n", getName(), keybrdBLightLvl);
-    
     if(keybrdBLightLvl == 1 && curKeybrdBlvl > keybrdBLightLvl)
     {
         brightnessLvlcode = NOTIFY_BRIGHTNESS_DOWN_MIN;
@@ -890,36 +889,15 @@ void AsusFnKeys::readPanelBrightnessValue()
     IORegistryEntry *displayDeviceEntry = IORegistryEntry::fromPath("IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/IGPU@2/AppleIntelFramebuffer@0/display0/AppleBacklightDisplay");
     
     if (displayDeviceEntry != NULL) {
-        
-        OSNumber *brightnessValue = 0;
-        OSDictionary *ioDisplayParaDict = 0;
-        
-        ioDisplayParaDict = OSDynamicCast(OSDictionary, displayDeviceEntry->getProperty("IODisplayParameters"));
-        
-        if(ioDisplayParaDict)
+        if(OSDictionary* ioDisplayParaDict = OSDynamicCast(OSDictionary, displayDeviceEntry->getProperty("IODisplayParameters")))
         {
-            OSDictionary  *brightnessDict = 0;
-            OSIterator *brightnessIter = 0;
-            
-            brightnessDict = OSDynamicCast(OSDictionary, ioDisplayParaDict->getObject("brightness"));
-            
-            if(brightnessDict){
-                const OSSymbol *dicKey = 0;
-                
-                brightnessIter = OSCollectionIterator::withCollection(brightnessDict);
-                
-                if(brightnessIter)
+            if(OSDictionary* brightnessDict = OSDynamicCast(OSDictionary, ioDisplayParaDict->getObject("brightness")))
+            {
+                if (OSNumber* brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject("value")))
                 {
-                    while((dicKey = (const OSSymbol *)brightnessIter->getNextObject()))
-                    {
-                        brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject(dicKey));
-                        
-                        if(brightnessValue)
-                        {
-                            if(brightnessValue->unsigned32BitValue() != 0)
-                                panelBrighntessLevel = brightnessValue->unsigned32BitValue()/64;
-                        }
-                    }
+                    panelBrightnessLevel = brightnessValue->unsigned32BitValue()/64;
+                    DEBUG_LOG("%s: Panel brightness level from AppleBacklightDisplay: %d\n", getName(), brightnessValue->unsigned32BitValue());
+                    DEBUG_LOG("%s: Read panel brightness level: %d\n", getName(), panelBrightnessLevel);
                 }
             }
         }
@@ -928,7 +906,7 @@ void AsusFnKeys::readPanelBrightnessValue()
 
 void AsusFnKeys::saveKBBacklightToNVRAM(UInt8 level)
 {
-    if (IORegistryEntry *nvram = OSDynamicCast(IORegistryEntry, fromPath("/options", gIODTPlane)))
+    if (IORegistryEntry* nvram = OSDynamicCast(IORegistryEntry, fromPath("/options", gIODTPlane)))
     {
         if (const OSSymbol* symbol = OSSymbol::withCString(kAsusKeyboardBacklight))
         {
@@ -1215,7 +1193,6 @@ void AsusFnKeys::dispatchMessage(int message, void* data)
         while (IOService* service = OSDynamicCast(IOService, i->getNextObject()))  {
             service->message(message, this, data);
         }
+        i->release();
     }
-    
-    i->release();
 }

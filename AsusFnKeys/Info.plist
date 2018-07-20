@@ -50,7 +50,7 @@
 				<key>ALS Turned on at boot</key>
 				<false/>
 				<key>HasALSensor</key>
-				<false/>
+				<true/>
 				<key>HasKeyboardBLight</key>
 				<true/>
 				<key>HasMediaButtons</key>
