@@ -637,13 +637,13 @@ void AsusFnKeys::handleMessage(int code)
             {
                 setProperty("TouchpadEnabled", true);
                 removeProperty("TouchpadDisabled");
-                IOLog("AsusFnKeys: Touchpad Enabled\n");
+                IOLog("%s: Touchpad Enabled\n", getName());
             }
             else
             {
                 removeProperty("TouchpadEnabled");
                 setProperty("TouchpadDisabled", true);
-                IOLog("AsusFnKeys: Touchpad Disabled\n");
+                IOLog("%s: Touchpad Disabled\n", getName());
             }
             break;
             
@@ -652,21 +652,21 @@ void AsusFnKeys::handleMessage(int code)
             /*params[0] =OSNumber::withNumber(4, 8);
              
              if(WMIDevice->evaluateInteger("PSTT", &res, params, 1))
-             IOLog("AsusFnKeys: Processor speedstep Changed\n");
+             IOLog("%s: Processor speedstep Changed\n", getName());
              else
-             IOLog("AsusFnKeys: Processor speedstep change failed %d\n",res);*/
+             IOLog("%s: Processor speedstep change failed %d\n", getName(), res);*/
             
             break;
             
         case 0x7A: // Fn + A, ALS Sensor
             isALSenabled = !isALSenabled;
             
-            params[0] =OSNumber::withNumber(isALSenabled, 8);
+            params[0] = OSNumber::withNumber(isALSenabled, 8);
             
             if(WMIDevice->evaluateInteger("ALSC", &res, params, 1))
-                IOLog("AsusFnKeys: ALS Enabled %d\n",isALSenabled);
+                IOLog("%s: ALS Enabled %d\n", getName(), isALSenabled);
             else
-                IOLog("AsusFnKeys: ALS Disabled %d E %d\n",res,isALSenabled);
+                IOLog("%s: ALS Disabled %d E %d\n", getName(), res, isALSenabled);
             break;
             
         case 0xC6: //ALS Notifcations
@@ -732,7 +732,7 @@ void AsusFnKeys::handleMessage(int code)
             break;
     }
     
-    //IOLog("AsusFnKeys: Received Key %d(0x%x) ALS mode %d\n",code, code, alsMode);
+    //IOLog("%s: Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
     //have media buttons then skip C, V and Space & ALS sensor keys events
     if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0x5c))
@@ -756,18 +756,18 @@ void AsusFnKeys::processFnKeyEvents(int code, bool alsMode, int kLoopCount, int 
     {
         for(int i =0; i < kLoopCount; i++)
             _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("AsusFnKeys: Loop Count %d, Dispatch Key %d(0x%x)\n",kLoopCount, code, code);
+        DEBUG_LOG("%s: Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), kLoopCount, code, code);
     }
     else if(bLoopCount>0)
     {
         for (int j = 0; j < bLoopCount; j++)
             _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("AsusFnKeys: Loop Count %d, Dispatch Key %d(0x%x)\n",bLoopCount, code,code);
+        DEBUG_LOG("%s: Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
     }
     else
     {
         _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("AsusFnKeys: Dispatch Key %d(0x%x)\n", code, code);
+        DEBUG_LOG("%s: Dispatch Key %d(0x%x)\n", getName(), code, code);
     }
 }
 
@@ -777,7 +777,7 @@ UInt32 AsusFnKeys::processALS()
     keybrdBLightLvl = 0;
     
     WMIDevice->evaluateInteger("ALSS", &keybrdBLightLvl, NULL, NULL);
-    //IOLog("AsusFnKeys: ALS %d\n",keybrdBLightLvl);
+    //IOLog("%s: ALS %d\n", getName(), keybrdBLightLvl);
     
     if(keybrdBLightLvl == 1 && curKeybrdBlvl > keybrdBLightLvl)
     {
@@ -883,14 +883,12 @@ void AsusFnKeys::readPanelBrightnessValue()
                 {
                     while((dicKey = (const OSSymbol *)brightnessIter->getNextObject()))
                     {
-                        //IOLog("AsusFnKeys: Brightness %s\n",dicKey->getCStringNoCopy());
                         brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject(dicKey));
                         
                         if(brightnessValue)
                         {
                             if(brightnessValue->unsigned32BitValue() != 0)
                                 panelBrighntessLevel = brightnessValue->unsigned32BitValue()/64;
-                            //IOLog("AsusFnKeys: PB %d BValue %d\n",panelBrighntessLevel,brightnessValue->unsigned32BitValue());
                         }
                     }
                 }
@@ -1137,13 +1135,13 @@ void AsusFnKeys::enableEvent()
             if(alsAtBoot)
             {
                 isALSenabled = !isALSenabled;
-                params[0] = OSNumber::withNumber(isALSenabled, 8);
-                WMIDevice->evaluateInteger("ALSC", &res,params,1);
+                params[0] = OSNumber::withNumber(isALSenabled, sizeof(isALSenabled)*8);
+                WMIDevice->evaluateInteger("ALSC", &res, params, 1);
                 
-                IOLog("AsusFnKeys: ALS turned on at boot %d\n",res);
+                IOLog("%s: ALS turned on at boot %d\n", getName(), res);
             }
             
-            IOLog("%s: Asus Fn Hotkey Events Enabled\n", this->getName());
+            IOLog("%s: Asus Fn Hotkey Events Enabled\n", getName());
             
         }
     }
