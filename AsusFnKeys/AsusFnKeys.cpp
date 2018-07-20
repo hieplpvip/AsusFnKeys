@@ -362,7 +362,7 @@ bool AsusFnKeys::init(OSDictionary *dict)
     panelBrighntessLevel = 16; //Mac starts with level 16
     res = 0;
     
-    tochpadEnabled = true; //touch enabled by default on startup
+    touchpadEnabled = true; //touch enabled by default on startup
     alsMode = false;
     isALSenabled  = true;
     isPanelBackLightOn = true;
@@ -487,6 +487,12 @@ void AsusFnKeys::stop(IOService *provider)
 	disableEvent();
 	PMstop();
 	
+    _publishNotify->remove();
+    _terminateNotify->remove();
+    OSSafeReleaseNULL(_publishNotify);
+    OSSafeReleaseNULL(_terminateNotify);
+    OSSafeReleaseNULL(_notificationServices);
+    
 	super::stop(provider);
 	return;
 }
@@ -521,6 +527,26 @@ bool AsusFnKeys::start(IOService *provider)
 	
 	this->registerService(0);
     
+    _notificationServices = OSSet::withCapacity(1);
+    OSDictionary * propertyMatch = propertyMatching(OSSymbol::withCString(kDeliverNotifications), OSBoolean::withBoolean(true));
+    
+    //
+    // Register notifications for availability of any IOService objects wanting to consume our message events
+    //
+    _publishNotify = addMatchingNotification(gIOFirstPublishNotification,
+                                             propertyMatch,
+                                             &notificationHandler,
+                                             this,
+                                             0, 10000);
+    
+    _terminateNotify = addMatchingNotification(gIOTerminatedNotification,
+                                               propertyMatch,
+                                               &notificationHandler,
+                                               this,
+                                               0, 10000);
+    
+    propertyMatch->release();
+    
     	
 	return true;
 }
@@ -550,7 +576,7 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *p
 #pragma mark AsusFnKeys Methods
 #pragma mark -
 
-IOReturn AsusFnKeys::message( UInt32 type, IOService * provider, void * argument)
+IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 {
 	if (type == kIOACPIMessageDeviceNotification)
 	{
@@ -632,8 +658,8 @@ void AsusFnKeys::handleMessage(int code)
             break;
             
         case 0x6B: //Fn + F9, Tochpad On/Off
-            tochpadEnabled = !tochpadEnabled;
-            if(tochpadEnabled)
+            touchpadEnabled = !touchpadEnabled;
+            if(touchpadEnabled)
             {
                 setProperty("TouchpadEnabled", true);
                 removeProperty("TouchpadDisabled");
@@ -645,6 +671,9 @@ void AsusFnKeys::handleMessage(int code)
                 setProperty("TouchpadDisabled", true);
                 IOLog("%s: Touchpad Disabled\n", getName());
             }
+            
+            //send to 3rd party drivers
+            dispatchMessage(kKeyboardSetTouchStatus, &touchpadEnabled);
             break;
             
         case 0x5C: //Fn + space bar, Processor Speedstepping changes
@@ -1155,4 +1184,38 @@ void AsusFnKeys::disableEvent()
 		_keyboardDevice->release();
 		_keyboardDevice = NULL;
 	}
+}
+
+#pragma mark -
+#pragma mark Notification methods
+#pragma mark -
+
+bool AsusFnKeys::notificationHandler(void * target, void * ref, IOService * service, IONotifier * notifier)
+{
+    AsusFnKeys* self = (AsusFnKeys*)target;
+    
+    if (notifier == self->_publishNotify) {
+        IOLog("%s: Notification consumer published: %s\n", self->getName(), service->getName());
+        self->_notificationServices->setObject(service);
+    }
+    
+    if (notifier == self->_terminateNotify) {
+        IOLog("%s: Notification consumer terminated: %s\n", self->getName(), service->getName());
+        self->_notificationServices->removeObject(service);
+    }
+    
+    return true;
+}
+
+void AsusFnKeys::dispatchMessage(int message, void* data)
+{
+    OSCollectionIterator* i = OSCollectionIterator::withCollection(_notificationServices);
+    
+    if (i != NULL) {
+        while (IOService* service = OSDynamicCast(IOService, i->getNextObject()))  {
+            service->message(message, this, data);
+        }
+    }
+    
+    i->release();
 }

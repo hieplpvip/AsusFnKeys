@@ -176,6 +176,14 @@ const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 #define MS_TO_NS(ms) (1000ULL * 1000ULL * (ms))
 #define kAsusKeyboardBacklight "asus-keyboard-backlight"
 
+#define kDeliverNotifications "ASUSFN,deliverNotifications"
+enum
+{
+    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
+    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
+    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110)      // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+};
+
 class AsusFnKeys : public IOService
 {
     OSDeclareDefaultStructors(AsusFnKeys)
@@ -219,17 +227,24 @@ protected:
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDevice(const char * guid, UInt32 methodId, UInt32 *status);
     
+    static bool notificationHandler(void* target, void* ref_con, IOService* service, IONotifier* notifier);
+    void dispatchMessage(int message, void* data);
+    
     static const FnKeysKeyMap keyMap[];
     
     UInt8 keybrdBLightLvl, curKeybrdBlvl;
     UInt32 panelBrighntessLevel;
-    bool   tochpadEnabled;
+    bool   touchpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
     bool   isPanelBackLightOn;
     bool   hasMediaButtons, hasKeybrdBLight;
     int    loopCount, kLoopCount;
     OSObject * params[1];
     UInt32 res;
+    
+    IONotifier* _publishNotify;
+    IONotifier* _terminateNotify;
+    OSSet* _notificationServices;
     
 private:
     int parse_wdg(OSDictionary *dict);
