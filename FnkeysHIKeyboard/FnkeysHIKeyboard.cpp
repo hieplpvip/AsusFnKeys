@@ -79,22 +79,7 @@ IOReturn FnKeysHIKeyboard::message( UInt32 type, IOService * provider, void * ar
 {
 	if (type == kIOACPIMessageDeviceNotification)
 	{
-		clock_sec_t  secs, deltaSecs;
-		clock_usec_t microsecs, deltaMicrosecs;
-		clock_get_system_microtime(&secs,&microsecs);
-		deltaSecs = secs - lastEventSecs;
-		
-		/*if (deltaSecs < 2)
 		{
-			deltaMicrosecs = microsecs + (1000000 * deltaSecs) - lastEventMicrosecs;
-			if (deltaMicrosecs < 125000) // rate limiter to 125 ms
-				return kIOReturnSuccess;
-		}
-		lastEventSecs =		 secs;
-		lastEventMicrosecs = microsecs;*/
-		
-		{
-        
 			UInt32 code = *((UInt32 *) argument);
 			
 			
@@ -110,7 +95,6 @@ IOReturn FnKeysHIKeyboard::message( UInt32 type, IOService * provider, void * ar
 								  /*timeStamp*/ now );
                                   
             //IOLog("Dispatched Key: %d %x\n",code,code);
-
 		}
 	}
 	return kIOReturnSuccess;

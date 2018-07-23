@@ -34,7 +34,7 @@
 #include <sys/kern_control.h>
 #include <libkern/OSTypes.h>
 
-#include  "FnKeysHIKeyboardDevice.h"
+#include "FnKeysHIKeyboardDevice.h"
 
 struct guid_block {
 	char guid[16];
@@ -211,16 +211,18 @@ protected:
     OSDictionary* getDictByUUID(const char * guid);
     IOReturn enableFnKeyEvents(const char * guid, UInt32 methodID);
     
-    
+    void parseConfig();
     void enableEvent();
     void disableEvent();
     void handleMessage(int code);
     void processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount);
+    void enableALS(bool state);
     UInt32 processALS();
+    UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level);
     void readPanelBrightnessValue();
     void saveKBBacklightToNVRAM(UInt8 level);
-    UInt8 loadKBBacklightFromNVRAM();
+    UInt8 readKBBacklightFromNVRAM();
     
     void getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
@@ -239,8 +241,6 @@ protected:
     bool   isPanelBackLightOn;
     bool   hasMediaButtons, hasKeybrdBLight;
     int    loopCount, kLoopCount;
-    OSObject * params[1];
-    UInt32 res;
     
     IONotifier* _publishNotify;
     IONotifier* _terminateNotify;

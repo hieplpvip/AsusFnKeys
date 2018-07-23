@@ -49,12 +49,8 @@
 			<true/>
 			<key>Preferences</key>
 			<dict>
-				<key>ALS Turned on at boot</key>
+				<key>ALSatBoot</key>
 				<false/>
-				<key>HasALSensor</key>
-				<true/>
-				<key>HasKeyboardBLight</key>
-				<true/>
 				<key>HasMediaButtons</key>
 				<false/>
 				<key>KeyboardBLightLevelAtBoot</key>
