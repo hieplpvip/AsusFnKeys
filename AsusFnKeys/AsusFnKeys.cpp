@@ -498,12 +498,10 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *p
 	if (kPowerStateOff == powerStateOrdinal)
 	{
 		DEBUG_LOG("%s: setPowerState(kPowerStateOff)\n", this->getName());
-		
 	}
 	else if (kPowerStateOn == powerStateOrdinal)
 	{
         DEBUG_LOG("%s: setPowerState(kPowerStateOn)\n", this->getName());
-		
 	}
 	
 	return IOPMAckImplied;
@@ -543,13 +541,8 @@ void AsusFnKeys::parseConfig()
     OSDictionary *Configuration;
     Configuration = OSDynamicCast(OSDictionary, getProperty("Preferences"));
     if (Configuration){
-        OSString *tmpString = 0;
         OSNumber *tmpNumber = 0;
-        OSData   *tmpData = 0;
         OSBoolean *tmpBoolean = FALSE;
-        OSData   *tmpObj = 0;
-        bool tmpBool = false;
-        UInt8 tmpUI8 = 0;
         
         OSIterator *iter = 0;
         const OSSymbol *dictKey = 0;
@@ -557,41 +550,23 @@ void AsusFnKeys::parseConfig()
         iter = OSCollectionIterator::withCollection(Configuration);
         if (iter) {
             while ((dictKey = (const OSSymbol *)iter->getNextObject())) {
-                tmpObj = 0;
-                
-                tmpString = OSDynamicCast(OSString, Configuration->getObject(dictKey));
-                if (tmpString) {
-                    tmpObj = OSData::withBytes(tmpString->getCStringNoCopy(), tmpString->getLength()+1);
-                }
-                
                 tmpNumber = OSDynamicCast(OSNumber, Configuration->getObject(dictKey));
-                if (tmpNumber) {
-                    tmpUI8 = tmpNumber->unsigned8BitValue();
-                    tmpObj = OSData::withBytes(&tmpUI8, sizeof(UInt8));
-                }
-                
                 tmpBoolean = OSDynamicCast(OSBoolean, Configuration->getObject(dictKey));
-                if (tmpBoolean) {
-                    tmpBool = (bool)tmpBoolean->getValue();
-                    tmpObj = OSData::withBytes(&tmpBool, sizeof(bool));
-                    
+                
+                const char *tmpStr = dictKey->getCStringNoCopy();
+                
+                if (tmpNumber) {
+                    if(!strncmp(tmpStr, "KeyboardBLightLevelAtBoot", strlen(tmpStr)))
+                        keybrdBLightLvl = tmpNumber->unsigned8BitValue();
                 }
                 
-                tmpData = OSDynamicCast(OSData, Configuration->getObject(dictKey));
-                if (tmpData) {
-                    tmpObj = tmpData;
-                }
-                if (tmpObj) {
-                    const char *tmpStr = dictKey->getCStringNoCopy();
+                if (tmpBoolean)
+                {
+                    if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
+                        hasMediaButtons = tmpBoolean->getValue();
                     
-                    if(!strncmp(dictKey->getCStringNoCopy(),"KeyboardBLightLevelAtBoot", strlen(tmpStr)))
-                        keybrdBLightLvl = tmpUI8;
-                    
-                    else if(!strncmp(dictKey->getCStringNoCopy(),"HasMediaButtons",strlen(tmpStr)))
-                        hasMediaButtons = tmpBool;
-                    
-                    else if(!strncmp(dictKey->getCStringNoCopy(),"ALSatBoot",strlen(tmpStr)))
-                        alsAtBoot = tmpBool;
+                    else if(!strncmp(tmpStr, "ALSatBoot", strlen(tmpStr)))
+                        alsAtBoot = tmpBoolean->getValue();
                 }
             }
         }
@@ -655,6 +630,7 @@ void AsusFnKeys::handleMessage(int code)
 {
     loopCount = kLoopCount = 0;
     alsMode = false;
+    UInt32 state = 0;
     
     // Processing the code
     switch (code) {
@@ -705,7 +681,7 @@ void AsusFnKeys::handleMessage(int code)
             
         case 0x5C: // Fn + Space bar, Processor Speedstepping changes
             
-            /*params[0] =OSNumber::withNumber(4, 8);
+            /*params[0] = OSNumber::withNumber(4, 8);
              
              if(WMIDevice->evaluateInteger("PSTT", &res, params, 1))
              IOLog("%s: Processor speedstep Changed\n", getName());
@@ -738,7 +714,7 @@ void AsusFnKeys::handleMessage(int code)
         case 0xC5: // Fn + F3, Decrease Keyboard Backlight
             if(hasKeybrdBLight)
             {
-                DEBUG_LOG("%s: Current keyboard backlight value: %d\n", getName(), getKeyboardBackLight());
+                keybrdBLightLvl = getKeyboardBackLight();
                 
                 if(keybrdBLightLvl>0)
                     keybrdBLightLvl--;
@@ -747,13 +723,12 @@ void AsusFnKeys::handleMessage(int code)
                 
                 setKeyboardBackLight(keybrdBLightLvl);
             }
-            
             break;
             
         case 0xC4: // Fn + F4, Increase Keyboard Backlight
             if(hasKeybrdBLight)
             {
-                DEBUG_LOG("%s: Current keyboard backlight value: %d\n", getName(), getKeyboardBackLight());
+                keybrdBLightLvl = getKeyboardBackLight();
                 
                 if(keybrdBLightLvl == 3)
                     keybrdBLightLvl = 3;
@@ -762,7 +737,16 @@ void AsusFnKeys::handleMessage(int code)
                 
                 setKeyboardBackLight(keybrdBLightLvl);
             }
+            break;
             
+        case 0x80: // LID open/close
+            state = getLIDState();
+            DEBUG_LOG("%s: LID state %d\n", getName(), state);
+            if(state && hasKeybrdBLight)
+            {
+                setKeyboardBackLight(keybrdBLightLvl); // restore keyboard backlight
+                DEBUG_LOG("%s: Restore keyboard backlight %d\n", getName(), keybrdBLightLvl);
+            }
             break;
             
         default:
@@ -789,7 +773,7 @@ void AsusFnKeys::handleMessage(int code)
     DEBUG_LOG("%s: Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
     // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0x5c))
+    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x80 || code == 0x5c))
         return;
     
     // Sending the code for the keyboard handler
@@ -801,7 +785,7 @@ void AsusFnKeys::handleMessage(int code)
 }
 
 //
-// Process Fn key event for ALS
+// Process Fn key event
 //
 void AsusFnKeys::processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount)
 {
@@ -889,6 +873,27 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level)
         curKeybrdBlvl = level;
         
         setProperty("KeyboardBLightLevel", level, sizeof(level)*8);
+    }
+}
+
+UInt32 AsusFnKeys::getLIDState()
+{
+    if (WMIDevice->validateObject("LIDS") != kIOReturnSuccess)
+    {
+        DEBUG_LOG("%s: LIDS method not found\n", getName());
+        return -1;
+    }
+    else
+    {
+        UInt32 res;
+        
+        if (WMIDevice->evaluateInteger("LIDS", &res) != kIOReturnSuccess)
+        {
+            DEBUG_LOG("%s: Failed to get LID state\n", getName());
+            return -1;
+        }
+        
+        return res;
     }
 }
 
@@ -1151,13 +1156,15 @@ void AsusFnKeys::enableEvent()
             /**** ALS Sesnor at boot ***/
             if(alsAtBoot)
             {
-                isALSenabled = !isALSenabled;
-                OSObject * params[1];
-                UInt32 res;
-                params[0] = OSNumber::withNumber(isALSenabled, sizeof(isALSenabled)*8);
-                WMIDevice->evaluateInteger("ALSC", &res, params, 1);
+                isALSenabled = true;
+                enableALS(isALSenabled);
                 
-                IOLog("%s: ALS turned on at boot %d\n", getName(), res);
+                IOLog("%s: ALS turned on at boot\n", getName());
+            }
+            else
+            {
+                isALSenabled = false;
+                enableALS(isALSenabled);
             }
             
             IOLog("%s: Asus Fn Hotkey Events Enabled\n", getName());

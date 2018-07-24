@@ -220,6 +220,7 @@ protected:
     UInt32 processALS();
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level);
+    UInt32 getLIDState();
     void readPanelBrightnessValue();
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();
