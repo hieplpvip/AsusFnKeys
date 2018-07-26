@@ -160,11 +160,12 @@ struct guid_block {
 #define EEEPC_WMI_DEVID_WIRELESS    0x00010011
 #define EEEPC_WMI_DEVID_TRACKPAD    0x00100011
 
-enum
+#define kIOPMPowerOff                       0
+#define kAsusFnKeysIOPMNumberPowerStates     2
+static IOPMPowerState powerStateArray[kAsusFnKeysIOPMNumberPowerStates] =
 {
-	kPowerStateOff = 0,
-	kPowerStateOn,
-	kPowerStateCount
+    { 1,kIOPMPowerOff,kIOPMPowerOff,kIOPMPowerOff,0,0,0,0,0,0,0,0 },
+    { 1,kIOPMPowerOn,IOPMPowerOn,IOPMPowerOn,0,0,0,0,0,0,0,0 }
 };
 
 const UInt8 NOTIFY_BRIGHTNESS_UP_MIN = 0x10;
@@ -220,7 +221,6 @@ protected:
     UInt32 processALS();
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level);
-    UInt32 getLIDState();
     void readPanelBrightnessValue();
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();

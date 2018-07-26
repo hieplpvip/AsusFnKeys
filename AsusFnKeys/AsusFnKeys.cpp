@@ -431,12 +431,6 @@ void AsusFnKeys::stop(IOService *provider)
 	return;
 }
 
-static IOPMPowerState powerStateArray[ kPowerStateCount ] =
-{
-	{ 1,0,0,0,0,0,0,0,0,0,0,0 },
-	{ 1,IOPMDeviceUsable,IOPMPowerOn,IOPMPowerOn,0,0,0,0,0,0,0,0 }
-};
-
 bool AsusFnKeys::start(IOService *provider)
 {
 	if(!provider || !super::start( provider ))
@@ -458,7 +452,7 @@ bool AsusFnKeys::start(IOService *provider)
 	enableEvent();
 	
 	PMinit();
-    registerPowerDriver(this, powerStateArray, 2);
+    registerPowerDriver(this, powerStateArray, kAsusFnKeysIOPMNumberPowerStates);
 	provider->joinPMtree(this);
 	
 	this->registerService(0);
@@ -488,20 +482,27 @@ bool AsusFnKeys::start(IOService *provider)
 	return true;
 }
 
-/*
- * Computer power state hook
- * Nothing to do for the moment
- *
- */
-IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker)
+IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *whatDevice)
 {
-	if (kPowerStateOff == powerStateOrdinal)
+    if (whatDevice != this)
+        return IOPMAckImplied;
+    
+	if (!powerStateOrdinal)
 	{
-		DEBUG_LOG("%s: setPowerState(kPowerStateOff)\n", this->getName());
+		DEBUG_LOG("%s: Going to sleep\n", getName());
 	}
-	else if (kPowerStateOn == powerStateOrdinal)
+	else
 	{
-        DEBUG_LOG("%s: setPowerState(kPowerStateOn)\n", this->getName());
+        DEBUG_LOG("%s: Woke up from sleep\n", getName());
+        IOSleep(1000);
+        _keyboardDevice->keyPressed(0);
+        
+        // Restore keyboard backlight
+        if(hasKeybrdBLight && keybrdBLightLvl >= 0)
+        {
+            setKeyboardBackLight(keybrdBLightLvl);
+            DEBUG_LOG("%s: Restore keyboard backlight %d\n", getName(), keybrdBLightLvl);
+        }
 	}
 	
 	return IOPMAckImplied;
@@ -630,7 +631,6 @@ void AsusFnKeys::handleMessage(int code)
 {
     loopCount = kLoopCount = 0;
     alsMode = false;
-    UInt32 state = 0;
     
     // Processing the code
     switch (code) {
@@ -739,16 +739,6 @@ void AsusFnKeys::handleMessage(int code)
             }
             break;
             
-        case 0x80: // LID open/close
-            state = getLIDState();
-            DEBUG_LOG("%s: LID state %d\n", getName(), state);
-            if(state && hasKeybrdBLight)
-            {
-                setKeyboardBackLight(keybrdBLightLvl); // restore keyboard backlight
-                DEBUG_LOG("%s: Restore keyboard backlight %d\n", getName(), keybrdBLightLvl);
-            }
-            break;
-            
         default:
             // Fn + F5, Panel Brightness Down
             if(code >= NOTIFY_BRIGHTNESS_DOWN_MIN && code<= NOTIFY_BRIGHTNESS_DOWN_MAX)
@@ -773,7 +763,7 @@ void AsusFnKeys::handleMessage(int code)
     DEBUG_LOG("%s: Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
     // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x80 || code == 0x5c))
+    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x5c))
         return;
     
     // Sending the code for the keyboard handler
@@ -873,27 +863,6 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level)
         curKeybrdBlvl = level;
         
         setProperty("KeyboardBLightLevel", level, sizeof(level)*8);
-    }
-}
-
-UInt32 AsusFnKeys::getLIDState()
-{
-    if (WMIDevice->validateObject("LIDS") != kIOReturnSuccess)
-    {
-        DEBUG_LOG("%s: LIDS method not found\n", getName());
-        return -1;
-    }
-    else
-    {
-        UInt32 res;
-        
-        if (WMIDevice->evaluateInteger("LIDS", &res) != kIOReturnSuccess)
-        {
-            DEBUG_LOG("%s: Failed to get LID state\n", getName());
-            return -1;
-        }
-        
-        return res;
     }
 }
 
