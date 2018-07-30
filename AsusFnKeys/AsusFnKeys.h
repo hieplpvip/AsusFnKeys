@@ -26,6 +26,7 @@
 #include <IOKit/hidsystem/ev_keymap.h>
 #include <IOKit/pwr_mgt/IOPMPowerSource.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
+#include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOService.h>
 #include <IOKit/IONVRAM.h>
 #include <IOKit/IOLib.h>
@@ -180,9 +181,10 @@ const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 #define kDeliverNotifications "ASUSFN,deliverNotifications"
 enum
 {
-    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
-    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
-    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110)      // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),       // set disable/enable touchpad (data is bool*)
+    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),       // get disable/enable touchpad (data is bool*)
+    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110),         // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+    kKeyboardModifierKeyPressTime = iokit_vendor_specific_msg(111),  // notify of timestamp a key was pressed (data is uint64_t*)
 };
 
 class AsusFnKeys : public IOService
@@ -220,7 +222,7 @@ protected:
     void enableALS(bool state);
     UInt32 processALS();
     UInt8 getKeyboardBackLight();
-    void setKeyboardBackLight(UInt8 level);
+    void setKeyboardBackLight(UInt8 level, bool nvram = true);
     void readPanelBrightnessValue();
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();
@@ -242,6 +244,13 @@ protected:
     bool   isPanelBackLightOn;
     bool   hasMediaButtons, hasKeybrdBLight;
     int    loopCount, kLoopCount;
+    
+    IOWorkLoop *_workLoop;
+    IOTimerEventSource *_autoOffTimer;
+    void autoOffTimer();
+    void resetTimer();
+    bool isautoOff, autoOffEnable;
+    uint64_t autoOffTimeout = 10000000000; // 10 seconds
     
     IONotifier* _publishNotify;
     IONotifier* _terminateNotify;

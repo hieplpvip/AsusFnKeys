@@ -366,6 +366,9 @@ bool AsusFnKeys::init(OSDictionary *dict)
     hasKeybrdBLight = false;
     hasMediaButtons = true;
     
+    isautoOff = false;
+    autoOffEnable = true;
+    
     _notificationServices = OSSet::withCapacity(1);
     
 	bool result = super::init(dict);
@@ -411,24 +414,6 @@ IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
     while (false);
     
     return (ret);
-}
-
-void AsusFnKeys::stop(IOService *provider)
-{
-	DEBUG_LOG("%s: Stop\n", this->getName());
-	
-	disableEvent();
-	PMstop();
-	
-    _publishNotify->remove();
-    _terminateNotify->remove();
-    OSSafeReleaseNULL(_publishNotify);
-    OSSafeReleaseNULL(_terminateNotify);
-    _notificationServices->flushCollection();
-    OSSafeReleaseNULL(_notificationServices);
-    
-	super::stop(provider);
-	return;
 }
 
 bool AsusFnKeys::start(IOService *provider)
@@ -478,8 +463,57 @@ bool AsusFnKeys::start(IOService *provider)
     
     propertyMatch->release();
     
-    	
+    if (autoOffEnable && hasKeybrdBLight)
+    {
+        resetTimer();
+        keytime += 1000000000; // small hack to avoid auto off on start
+        
+        _workLoop = getWorkLoop();
+        if (!_workLoop){
+            DEBUG_LOG("%s: Failed to get workloop!\n", getName());
+            return false;
+        }
+        
+        _workLoop->retain();
+        
+        _autoOffTimer = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &AsusFnKeys::autoOffTimer));
+        _workLoop->addEventSource(_autoOffTimer);
+        _autoOffTimer->setTimeoutMS(500);
+        
+        if (!_autoOffTimer)
+            return false;
+    }
+    
 	return true;
+}
+
+void AsusFnKeys::stop(IOService *provider)
+{
+    DEBUG_LOG("%s: Stop\n", this->getName());
+    
+    if (_autoOffTimer){
+        _autoOffTimer->cancelTimeout();
+        _autoOffTimer->release();
+        _autoOffTimer = NULL;
+    }
+    
+    if (_workLoop) {
+        _workLoop->release();
+        _workLoop = NULL;
+    }
+    
+    disableEvent();
+    PMstop();
+    
+    _publishNotify->remove();
+    _terminateNotify->remove();
+    OSSafeReleaseNULL(_publishNotify);
+    OSSafeReleaseNULL(_terminateNotify);
+    _notificationServices->flushCollection();
+    OSSafeReleaseNULL(_notificationServices);
+    
+    super::stop(provider);
+    return;
 }
 
 IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *whatDevice)
@@ -490,6 +524,11 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
 	if (!powerStateOrdinal)
 	{
 		DEBUG_LOG("%s: Going to sleep\n", getName());
+        if (_autoOffTimer){
+            _autoOffTimer->cancelTimeout();
+            _autoOffTimer->release();
+            _autoOffTimer = NULL;
+        }
 	}
 	else
 	{
@@ -502,6 +541,21 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
         {
             setKeyboardBackLight(keybrdBLightLvl);
             DEBUG_LOG("%s: Restore keyboard backlight %d\n", getName(), keybrdBLightLvl);
+        }
+        
+        if (autoOffEnable && hasKeybrdBLight)
+        {
+            resetTimer();
+            
+            if (_autoOffTimer){
+                _autoOffTimer->cancelTimeout();
+                _autoOffTimer->release();
+                _autoOffTimer = NULL;
+            }
+            
+            _autoOffTimer = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &AsusFnKeys::autoOffTimer));
+            _workLoop->addEventSource(_autoOffTimer);
+            _autoOffTimer->setTimeoutMS(500);
         }
 	}
 	
@@ -559,15 +613,21 @@ void AsusFnKeys::parseConfig()
                 if (tmpNumber) {
                     if(!strncmp(tmpStr, "KeyboardBLightLevelAtBoot", strlen(tmpStr)))
                         keybrdBLightLvl = tmpNumber->unsigned8BitValue();
+                    
+                    else if(!strncmp(tmpStr, "IdleKBacklightAutoOffTimeout", strlen(tmpStr)))
+                        autoOffTimeout = tmpNumber->unsigned64BitValue() * 1000000;
                 }
                 
                 if (tmpBoolean)
                 {
-                    if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
+                    if(!strncmp(tmpStr, "ALSatBoot", strlen(tmpStr)))
+                        alsAtBoot = tmpBoolean->getValue();
+                    
+                    else if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
                         hasMediaButtons = tmpBoolean->getValue();
                     
-                    else if(!strncmp(tmpStr, "ALSatBoot", strlen(tmpStr)))
-                        alsAtBoot = tmpBoolean->getValue();
+                    else if(!strncmp(tmpStr, "IdleKBacklightAutoOff", strlen(tmpStr)))
+                        autoOffEnable = tmpBoolean->getValue();
                 }
             }
         }
@@ -576,10 +636,15 @@ void AsusFnKeys::parseConfig()
 
 IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 {
-    if (type == kKeyboardKeyPressTime)
+    if (type == kKeyboardKeyPressTime || type == kKeyboardModifierKeyPressTime)
     {
-        keytime = *((uint64_t*)argument);
         DEBUG_LOG("%s: keyPressed = %llu\n", getName(), keytime);
+        keytime = *((uint64_t*)argument);
+        if (isautoOff && keybrdBLightLvl)
+        {
+            setKeyboardBackLight(keybrdBLightLvl);
+            isautoOff = false;
+        }
     }
 	else if (type == kIOACPIMessageDeviceNotification)
 	{
@@ -627,10 +692,38 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 	return kIOReturnSuccess;
 }
 
+void AsusFnKeys::autoOffTimer()
+{
+    uint64_t now_abs;
+    clock_get_uptime(&now_abs);
+    uint64_t now_ns;
+    absolutetime_to_nanoseconds(now_abs, &now_ns);
+    
+    DEBUG_LOG("%s: autoOffTimer %llu\n", getName(), now_ns - keytime);
+    if (now_ns - keytime > autoOffTimeout && !isautoOff)
+    {
+        keybrdBLightLvl = getKeyboardBackLight();
+        if (keybrdBLightLvl) setKeyboardBackLight(0, false);
+        isautoOff = true;
+    }
+    
+    _autoOffTimer->setTimeoutMS(500);
+}
+
+void AsusFnKeys::resetTimer()
+{
+    uint64_t now_abs;
+    clock_get_uptime(&now_abs);
+    absolutetime_to_nanoseconds(now_abs, &keytime);
+    isautoOff = false;
+}
+
 void AsusFnKeys::handleMessage(int code)
 {
     loopCount = kLoopCount = 0;
     alsMode = false;
+    
+    resetTimer();
     
     // Processing the code
     switch (code) {
@@ -714,28 +807,20 @@ void AsusFnKeys::handleMessage(int code)
         case 0xC5: // Fn + F3, Decrease Keyboard Backlight
             if(hasKeybrdBLight)
             {
-                keybrdBLightLvl = getKeyboardBackLight();
-                
                 if(keybrdBLightLvl>0)
                     keybrdBLightLvl--;
                 else
                     keybrdBLightLvl = 0;
-                
-                setKeyboardBackLight(keybrdBLightLvl);
             }
             break;
             
         case 0xC4: // Fn + F4, Increase Keyboard Backlight
             if(hasKeybrdBLight)
             {
-                keybrdBLightLvl = getKeyboardBackLight();
-                
                 if(keybrdBLightLvl == 3)
                     keybrdBLightLvl = 3;
                 else
                     keybrdBLightLvl++;
-                
-                setKeyboardBackLight(keybrdBLightLvl);
             }
             break;
             
@@ -762,8 +847,11 @@ void AsusFnKeys::handleMessage(int code)
     
     DEBUG_LOG("%s: Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
+    if (hasKeybrdBLight)
+        setKeyboardBackLight(keybrdBLightLvl);
+    
     // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x5c))
+    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7))
         return;
     
     // Sending the code for the keyboard handler
@@ -842,7 +930,7 @@ UInt8 AsusFnKeys::getKeyboardBackLight()
     }
 }
 
-void AsusFnKeys::setKeyboardBackLight(UInt8 level)
+void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram)
 {
     if (WMIDevice->validateObject("SKBL") != kIOReturnSuccess)
         DEBUG_LOG("%s: Keyboard backlight not found\n", getName());
@@ -858,7 +946,7 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level)
             return;
         }
         
-        saveKBBacklightToNVRAM(level);
+        if (nvram) saveKBBacklightToNVRAM(level);
         
         curKeybrdBlvl = level;
         
