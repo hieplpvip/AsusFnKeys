@@ -579,7 +579,7 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
     if (type == kKeyboardKeyPressTime)
     {
         keytime = *((uint64_t*)argument);
-        IOLog("%s: keyPressed = %llu\n", getName(), keytime);
+        DEBUG_LOG("%s: keyPressed = %llu\n", getName(), keytime);
     }
 	else if (type == kIOACPIMessageDeviceNotification)
 	{
