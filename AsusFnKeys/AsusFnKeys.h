@@ -27,6 +27,7 @@
 #include <IOKit/pwr_mgt/IOPMPowerSource.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
 #include <IOKit/IOTimerEventSource.h>
+#include <IOKit/IOCommandGate.h>
 #include <IOKit/IOService.h>
 #include <IOKit/IONVRAM.h>
 #include <IOKit/IOLib.h>
@@ -231,7 +232,9 @@ protected:
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDevice(const char * guid, UInt32 methodId, UInt32 *status);
     
+    void notificationHandlerGated(IOService * newService, IONotifier * notifier);
     bool notificationHandler(void * refCon, IOService * newService, IONotifier * notifier);
+    void dispatchMessageGated(int* message, void* data);
     void dispatchMessage(int message, void* data);
     
     static const FnKeysKeyMap keyMap[];
@@ -247,6 +250,8 @@ protected:
     
     IOWorkLoop *_workLoop;
     IOTimerEventSource *_autoOffTimer;
+    IOCommandGate* command_gate;
+    
     void autoOffTimer();
     void resetTimer();
     bool isautoOff, autoOffEnable;

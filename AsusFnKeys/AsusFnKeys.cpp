@@ -463,18 +463,23 @@ bool AsusFnKeys::start(IOService *provider)
     
     propertyMatch->release();
     
+    _workLoop = getWorkLoop();
+    if (!_workLoop){
+        DEBUG_LOG("%s: Failed to get workloop!\n", getName());
+        return false;
+    }
+    _workLoop->retain();
+    
+    command_gate = IOCommandGate::commandGate(this);
+    if (!command_gate) {
+        return false;
+    }
+    _workLoop->addEventSource(command_gate);
+    
     if (autoOffEnable && hasKeybrdBLight)
     {
         resetTimer();
         keytime += 1000000000; // small hack to avoid auto off on start
-        
-        _workLoop = getWorkLoop();
-        if (!_workLoop){
-            DEBUG_LOG("%s: Failed to get workloop!\n", getName());
-            return false;
-        }
-        
-        _workLoop->retain();
         
         _autoOffTimer = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &AsusFnKeys::autoOffTimer));
         _workLoop->addEventSource(_autoOffTimer);
@@ -732,6 +737,18 @@ void AsusFnKeys::handleMessage(int code)
             // ignore silently
             break;
             
+        case 0x30: // Volume up
+            code = 72;
+            break;
+            
+        case 0x31: // Volume down
+            code = 73;
+            break;
+            
+        case 0x32: // Mute
+            code = 74;
+            break;
+            
         // Backlight
         case 0x33:// hardwired On
         case 0x34:// hardwired Off
@@ -751,6 +768,10 @@ void AsusFnKeys::handleMessage(int code)
             }
             
             isPanelBackLightOn = !isPanelBackLightOn;
+            break;
+            
+        case 0x61: // Fn + F8
+            code = 80;
             break;
             
         case 0x6B: // Fn + F9, Touchpad On/Off
@@ -781,6 +802,11 @@ void AsusFnKeys::handleMessage(int code)
              else
              IOLog("%s: Processor speedstep change failed %d\n", getName(), res);*/
             
+            break;
+            
+        case 0x5E:
+        case 0x5F: // Wifi
+            code = 122;
             break;
             
         case 0x7A: // Fn + A, ALS Sensor
@@ -1243,7 +1269,7 @@ void AsusFnKeys::disableEvent()
 #pragma mark Notification methods
 #pragma mark -
 
-bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier)
+void AsusFnKeys::notificationHandlerGated(IOService * newService, IONotifier * notifier)
 {
     if (notifier == _publishNotify) {
         IOLog("%s: Notification consumer published: %s\n", getName(), newService->getName());
@@ -1254,18 +1280,27 @@ bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONo
         IOLog("%s: Notification consumer terminated: %s\n", getName(), newService->getName());
         _notificationServices->removeObject(newService);
     }
-    
+}
+
+bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier)
+{
+    command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &AsusFnKeys::notificationHandlerGated), newService, notifier);
     return true;
 }
 
-void AsusFnKeys::dispatchMessage(int message, void* data)
+void AsusFnKeys::dispatchMessageGated(int* message, void* data)
 {
     OSCollectionIterator* i = OSCollectionIterator::withCollection(_notificationServices);
     
     if (i != NULL) {
         while (IOService* service = OSDynamicCast(IOService, i->getNextObject()))  {
-            service->message(message, this, data);
+            service->message(*message, this, data);
         }
         i->release();
     }
+}
+
+void AsusFnKeys::dispatchMessage(int message, void* data)
+{
+    command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &AsusFnKeys::dispatchMessageGated), &message, data);
 }
