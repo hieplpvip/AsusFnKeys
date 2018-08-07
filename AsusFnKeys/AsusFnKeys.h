@@ -39,16 +39,16 @@
 #include "FnKeysHIKeyboardDevice.h"
 
 struct guid_block {
-	char guid[16];
-	union {
-		char object_id[2];
-		struct {
-			unsigned char notify_id;
-			unsigned char reserved;
-		};
-	};
-	UInt8 instance_count;
-	UInt8 flags;
+    char guid[16];
+    union {
+        char object_id[2];
+        struct {
+            unsigned char notify_id;
+            unsigned char reserved;
+        };
+    };
+    UInt8 instance_count;
+    UInt8 flags;
 };
 
 
@@ -57,9 +57,9 @@ struct guid_block {
  * explicitily disable data collection.
  */
 #define ACPI_WMI_EXPENSIVE   0x1
-#define ACPI_WMI_METHOD      0x2	/* GUID is a method */
-#define ACPI_WMI_STRING      0x4	/* GUID takes & returns a string */
-#define ACPI_WMI_EVENT       0x8	/* GUID is an event */
+#define ACPI_WMI_METHOD      0x2    /* GUID is a method */
+#define ACPI_WMI_STRING      0x4    /* GUID takes & returns a string */
+#define ACPI_WMI_EVENT       0x8    /* GUID is an event */
 #define ASUS_WMI_MGMT_GUID      "97845ED0-4E6D-11DE-8A39-0800200C9A66"
 #define ASUS_NB_WMI_EVENT_GUID  "0B3CBB35-E3C2-45ED-91C2-4C5A6D195D1C"
 
@@ -209,7 +209,7 @@ public:
     virtual IOService *probe(IOService *provider, SInt32 *score);
     
     //power management events
-    virtual IOReturn	setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker);
+    virtual IOReturn    setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker);
     
 protected:
     OSDictionary* getDictByUUID(const char * guid);

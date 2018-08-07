@@ -41,34 +41,34 @@ OSDefineMetaClassAndStructors(FnKeysHIKeyboard, IOHIKeyboard)
 
 bool FnKeysHIKeyboard::init(OSDictionary *dictionary)
 {
-	return super::init(dictionary);
+    return super::init(dictionary);
 }
 
 bool FnKeysHIKeyboard::start(IOService *provider)
 {
-	if(!provider || !super::start( provider )) 
-	{
+    if(!provider || !super::start( provider ))
+    {
         IOLog("%s::Failed to load..\n", getName());
-		return false;
-	}
-	
-	Device = (FnKeysHIKeyboardDevice *) provider;
-	clock_get_system_microtime(&lastEventSecs,&lastEventMicrosecs);
+        return false;
+    }
+    
+    Device = (FnKeysHIKeyboardDevice *) provider;
+    clock_get_system_microtime(&lastEventSecs,&lastEventMicrosecs);
     
     setProperty("Product", "Fn Keys Keyboard Driver for Asus");
-
-	return true;
+    
+    return true;
 }
 
 void FnKeysHIKeyboard::stop(IOService *provider)
 {
-	super::stop(provider);
+    super::stop(provider);
 }
 
 
 void FnKeysHIKeyboard::free(void)
 {
-	super::free();
+    super::free();
 }
 
 /*
@@ -77,8 +77,8 @@ void FnKeysHIKeyboard::free(void)
  */
 IOReturn FnKeysHIKeyboard::message(UInt32 type, IOService * provider, void * argument)
 {
-	if (type == kIOACPIMessageDeviceNotification)
-	{
+    if (type == kIOACPIMessageDeviceNotification)
+    {
         UInt32 code = *((UInt32 *) argument);
         
         
@@ -92,12 +92,12 @@ IOReturn FnKeysHIKeyboard::message(UInt32 type, IOService * provider, void * arg
         dispatchKeyboardEvent(code,
                               /*direction*/ false,
                               /*timeStamp*/ now);
-	}
+    }
     else
     {
         DEBUG_LOG("%s::Unexpected message: %ull\n", getName(), *((UInt32 *) argument));
     }
-	return kIOReturnSuccess;
+    return kIOReturnSuccess;
 }
 
 #pragma mark -
@@ -113,14 +113,14 @@ const unsigned char * FnKeysHIKeyboard::defaultKeymapOfLength( UInt32 * length )
 {
     static const unsigned char ConsumerKeyMap[] =
     {
-		// The first 16 bits are always read first, to determine if the rest of
+        // The first 16 bits are always read first, to determine if the rest of
         // the keymap is in shorts (16 bits) or bytes (8 bits). If the first 16 bits
         // equals 0, data is in bytes; if first 16 bits equal 1, data is in shorts.
         
-        0x00,0x00,		// data is in bytes
-		
+        0x00,0x00,        // data is in bytes
+        
         // The next value is the number of modifier keys. We have none in our driver.
-		
+        
         0x00,
         
         // The next value is number of key definitions. We have none in our driver.
@@ -135,36 +135,36 @@ const unsigned char * FnKeysHIKeyboard::defaultKeymapOfLength( UInt32 * length )
         
         NX_NUMSPECIALKEYS,
         
-        // Special Key	  	SCANCODE
+        // Special Key          SCANCODE
         //-----------------------------------------------------------        
-		
-        NX_KEYTYPE_SOUND_UP,		    NX_KEYTYPE_SOUND_UP,
-        NX_KEYTYPE_SOUND_DOWN,		    NX_KEYTYPE_SOUND_DOWN,
-        NX_KEYTYPE_BRIGHTNESS_UP,	    NX_KEYTYPE_BRIGHTNESS_UP,
-        NX_KEYTYPE_BRIGHTNESS_DOWN,	    NX_KEYTYPE_BRIGHTNESS_DOWN,
-        NX_KEYTYPE_CAPS_LOCK,		    NX_KEYTYPE_CAPS_LOCK,
-        NX_KEYTYPE_HELP,		        NX_KEYTYPE_HELP,
-        NX_POWER_KEY,			        NX_POWER_KEY,
-        NX_KEYTYPE_MUTE,		        NX_KEYTYPE_MUTE,
-        NX_UP_ARROW_KEY,		        NX_UP_ARROW_KEY,
-        NX_DOWN_ARROW_KEY,		        NX_DOWN_ARROW_KEY,
-        NX_KEYTYPE_NUM_LOCK,		    NX_KEYTYPE_NUM_LOCK,
-        NX_KEYTYPE_CONTRAST_UP,		    NX_KEYTYPE_CONTRAST_UP,
-        NX_KEYTYPE_CONTRAST_DOWN,	    NX_KEYTYPE_CONTRAST_DOWN,
-        NX_KEYTYPE_LAUNCH_PANEL,	    NX_KEYTYPE_LAUNCH_PANEL,
-        NX_KEYTYPE_EJECT,		        NX_KEYTYPE_EJECT,
-        NX_KEYTYPE_VIDMIRROR,		    NX_KEYTYPE_VIDMIRROR,
-        NX_KEYTYPE_PLAY,		        NX_KEYTYPE_PLAY,
-        NX_KEYTYPE_NEXT,		        NX_KEYTYPE_NEXT,
-        NX_KEYTYPE_PREVIOUS,		    NX_KEYTYPE_PREVIOUS,
-        NX_KEYTYPE_FAST,		        NX_KEYTYPE_FAST,
-        NX_KEYTYPE_REWIND,		        NX_KEYTYPE_REWIND,
-        NX_KEYTYPE_ILLUMINATION_UP,	    NX_KEYTYPE_ILLUMINATION_UP,
-        NX_KEYTYPE_ILLUMINATION_DOWN,	NX_KEYTYPE_ILLUMINATION_DOWN,
-        NX_KEYTYPE_ILLUMINATION_TOGGLE,	NX_KEYTYPE_ILLUMINATION_TOGGLE
-		
+        
+        NX_KEYTYPE_SOUND_UP,            NX_KEYTYPE_SOUND_UP,
+        NX_KEYTYPE_SOUND_DOWN,            NX_KEYTYPE_SOUND_DOWN,
+        NX_KEYTYPE_BRIGHTNESS_UP,        NX_KEYTYPE_BRIGHTNESS_UP,
+        NX_KEYTYPE_BRIGHTNESS_DOWN,        NX_KEYTYPE_BRIGHTNESS_DOWN,
+        NX_KEYTYPE_CAPS_LOCK,            NX_KEYTYPE_CAPS_LOCK,
+        NX_KEYTYPE_HELP,                NX_KEYTYPE_HELP,
+        NX_POWER_KEY,                    NX_POWER_KEY,
+        NX_KEYTYPE_MUTE,                NX_KEYTYPE_MUTE,
+        NX_UP_ARROW_KEY,                NX_UP_ARROW_KEY,
+        NX_DOWN_ARROW_KEY,                NX_DOWN_ARROW_KEY,
+        NX_KEYTYPE_NUM_LOCK,            NX_KEYTYPE_NUM_LOCK,
+        NX_KEYTYPE_CONTRAST_UP,            NX_KEYTYPE_CONTRAST_UP,
+        NX_KEYTYPE_CONTRAST_DOWN,        NX_KEYTYPE_CONTRAST_DOWN,
+        NX_KEYTYPE_LAUNCH_PANEL,        NX_KEYTYPE_LAUNCH_PANEL,
+        NX_KEYTYPE_EJECT,                NX_KEYTYPE_EJECT,
+        NX_KEYTYPE_VIDMIRROR,            NX_KEYTYPE_VIDMIRROR,
+        NX_KEYTYPE_PLAY,                NX_KEYTYPE_PLAY,
+        NX_KEYTYPE_NEXT,                NX_KEYTYPE_NEXT,
+        NX_KEYTYPE_PREVIOUS,            NX_KEYTYPE_PREVIOUS,
+        NX_KEYTYPE_FAST,                NX_KEYTYPE_FAST,
+        NX_KEYTYPE_REWIND,                NX_KEYTYPE_REWIND,
+        NX_KEYTYPE_ILLUMINATION_UP,        NX_KEYTYPE_ILLUMINATION_UP,
+        NX_KEYTYPE_ILLUMINATION_DOWN,    NX_KEYTYPE_ILLUMINATION_DOWN,
+        NX_KEYTYPE_ILLUMINATION_TOGGLE,    NX_KEYTYPE_ILLUMINATION_TOGGLE
+        
     };
-	
+    
     if(length) *length = sizeof(ConsumerKeyMap);
     
     return(ConsumerKeyMap );

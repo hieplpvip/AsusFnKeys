@@ -37,63 +37,63 @@ OSDefineMetaClassAndStructors(FnKeysHIKeyboardDevice, IOService);
 
 bool FnKeysHIKeyboardDevice::attach(IOService * provider )
 {
-	if (!super::attach(provider))  return false;
-	
-	FnKeys = OSDynamicCast(AsusFnKeys ,provider);
-	if (NULL == FnKeys)
-		return false;
-	
-	FnKeys->retain();
-	
-	return true;
+    if (!super::attach(provider))  return false;
+    
+    FnKeys = OSDynamicCast(AsusFnKeys ,provider);
+    if (NULL == FnKeys)
+	    return false;
+    
+    FnKeys->retain();
+    
+    return true;
 }
 
 void FnKeysHIKeyboardDevice::detach(IOService * provider )
 {
-	FnKeys->release();
-	FnKeys = 0;
-	
-	super::detach(provider);
+    FnKeys->release();
+    FnKeys = 0;
+    
+    super::detach(provider);
 }
 
 void FnKeysHIKeyboardDevice::keyPressed(int code)
 {
-	int i = 0, out;
-	do
-	{
-		if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
-		{
+    int i = 0, out;
+    do
+    {
+	    if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
+	    {
             DEBUG_LOG("%s::Unknown key %02X i=%d\n", getName(), code, i);
-			break;
-		}
-		if (keyMap[i].in == code)
-		{
+    	    break;
+	    }
+	    if (keyMap[i].in == code)
+	    {
             DEBUG_LOG("%s::Key Pressed %02X i=%d\n", getName(), code, i);
-			out = keyMap[i].out;
-			messageClients(kIOACPIMessageDeviceNotification, &out);
-			break;
-		}
-		i++;
-	}
-	while (true);	
+    	    out = keyMap[i].out;
+    	    messageClients(kIOACPIMessageDeviceNotification, &out);
+    	    break;
+	    }
+	    i++;
+    }
+    while (true);    
 }
 
 
 void FnKeysHIKeyboardDevice::setKeyMap(const FnKeysKeyMap *_keyMap)
 {
-	int i = 0;
-	keyMap = _keyMap;
-	OSDictionary *dict = OSDictionary::withCapacity(10);
+    int i = 0;
+    keyMap = _keyMap;
+    OSDictionary *dict = OSDictionary::withCapacity(10);
     DEBUG_LOG("%s::Setting key %02X i=%d\n", getName(), keyMap[i].in, i);
-	do
-	{
-		if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
-			break;
+    do
+    {
+	    if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
+    	    break;
         DEBUG_LOG("%s::Setting key %02X i=%d\n", getName(), keyMap[i].in, i);
-		dict->setObject(keyMap[i].description, OSNumber::withNumber(keyMap[i].in,8));
-		i++;
-	}
-	while (true);
-	
-	setProperty("KeyMap", dict);
+	    dict->setObject(keyMap[i].description, OSNumber::withNumber(keyMap[i].in,8));
+	    i++;
+    }
+    while (true);
+    
+    setProperty("KeyMap", dict);
 }

@@ -30,24 +30,24 @@ class FnKeysHIKeyboardDevice;
 
 class FnKeysHIKeyboard : public IOHIKeyboard
 {
-	OSDeclareDefaultStructors(FnKeysHIKeyboard)
-	
+    OSDeclareDefaultStructors(FnKeysHIKeyboard)
+    
 private:
-	FnKeysHIKeyboardDevice *Device;
-	clock_sec_t  lastEventSecs;
-	clock_usec_t lastEventMicrosecs;
-	
+    FnKeysHIKeyboardDevice *Device;
+    clock_sec_t  lastEventSecs;
+    clock_usec_t lastEventMicrosecs;
+    
 public:
-	// standard IOKit methods
-	virtual bool       init(OSDictionary *dictionary = 0);
-	virtual bool       start(IOService *provider);
-	virtual void       stop(IOService *provider);
-	virtual void       free(void);
-	
-	IOReturn message( UInt32 type, IOService * provider, void * argument);
-	
-	// IOHIKeyboard specific methods
-	virtual const unsigned char * defaultKeymapOfLength(UInt32 * length);
+    // standard IOKit methods
+    virtual bool       init(OSDictionary *dictionary = 0);
+    virtual bool       start(IOService *provider);
+    virtual void       stop(IOService *provider);
+    virtual void       free(void);
+    
+    IOReturn message( UInt32 type, IOService * provider, void * argument);
+    
+    // IOHIKeyboard specific methods
+    virtual const unsigned char * defaultKeymapOfLength(UInt32 * length);
 };
 
 #endif

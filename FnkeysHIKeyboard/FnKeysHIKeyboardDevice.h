@@ -27,29 +27,29 @@
 #include <IOKit/IOService.h>
 
 typedef struct  {
-	UInt16 in;
-	UInt8 out;
-	const char *description;
+    UInt16 in;
+    UInt8 out;
+    const char *description;
 } FnKeysKeyMap;
 
 class AsusFnKeys;
 
 class FnKeysHIKeyboardDevice : public IOService
 {
-	OSDeclareDefaultStructors(FnKeysHIKeyboardDevice);
-	
-private:
-	AsusFnKeys *FnKeys;
-	
-public:
-	virtual bool attach(IOService * provider);
-	virtual void detach(IOService * provider);
-	
-	void keyPressed(int code);
+    OSDeclareDefaultStructors(FnKeysHIKeyboardDevice);
     
-	const FnKeysKeyMap * keyMap;
-	void setKeyMap(const FnKeysKeyMap * _keyMap);
-	
+private:
+    AsusFnKeys *FnKeys;
+    
+public:
+    virtual bool attach(IOService * provider);
+    virtual void detach(IOService * provider);
+    
+    void keyPressed(int code);
+    
+    const FnKeysKeyMap * keyMap;
+    void setKeyMap(const FnKeysKeyMap * _keyMap);
+    
 };
 
 #endif
