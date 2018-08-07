@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		270DCF8D175CA27600004E6A /* FnkeysHIKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF89175CA27600004E6A /* FnkeysHIKeyboard.cpp */; };
+		270DCF8D175CA27600004E6A /* FnKeysHIKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */; };
 		270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */; };
 		270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */; };
 		270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */; };
@@ -27,7 +27,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		270DCF89175CA27600004E6A /* FnkeysHIKeyboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnkeysHIKeyboard.cpp; sourceTree = "<group>"; };
+		270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboard.cpp; sourceTree = "<group>"; };
 		270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboard.h; sourceTree = "<group>"; };
 		270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboardDevice.cpp; sourceTree = "<group>"; };
 		270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboardDevice.h; sourceTree = "<group>"; };
@@ -78,7 +78,7 @@
 		4C34A4B8210102B700028542 /* FnkeysHIKeyboard */ = {
 			isa = PBXGroup;
 			children = (
-				270DCF89175CA27600004E6A /* FnkeysHIKeyboard.cpp */,
+				270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */,
 				270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */,
 				270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */,
 				270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */,
@@ -173,7 +173,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */,
-				270DCF8D175CA27600004E6A /* FnkeysHIKeyboard.cpp in Sources */,
+				270DCF8D175CA27600004E6A /* FnKeysHIKeyboard.cpp in Sources */,
 				270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

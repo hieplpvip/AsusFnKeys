@@ -25,9 +25,13 @@
 #include <IOKit/hidsystem/ev_keymap.h>
 #include "FnKeysHIKeyboard.h"
 
+#if DEBUG
+#define DEBUG_LOG(fmt, args...) IOLog(fmt, ## args)
+#else
+#define DEBUG_LOG(fmt, args...)
+#endif
+
 #define super IOHIKeyboard
-
-
 OSDefineMetaClassAndStructors(FnKeysHIKeyboard, IOHIKeyboard)
 
 
@@ -35,29 +39,26 @@ OSDefineMetaClassAndStructors(FnKeysHIKeyboard, IOHIKeyboard)
 #pragma mark IOService override
 #pragma mark -
 
-
 bool FnKeysHIKeyboard::init(OSDictionary *dictionary)
 {
 	return super::init(dictionary);
 }
 
-
 bool FnKeysHIKeyboard::start(IOService *provider)
 {
 	if(!provider || !super::start( provider )) 
 	{
-		IOLog("%s: Failed to load..\n", this->getName());
+        IOLog("%s::Failed to load..\n", getName());
 		return false;
 	}
 	
 	Device = (FnKeysHIKeyboardDevice *) provider;
 	clock_get_system_microtime(&lastEventSecs,&lastEventMicrosecs);
     
-    setProperty("Product", "Fn Keys Keyboard for Asus");
+    setProperty("Product", "Fn Keys Keyboard Driver for Asus");
 
 	return true;
 }
-
 
 void FnKeysHIKeyboard::stop(IOService *provider)
 {
@@ -70,40 +71,38 @@ void FnKeysHIKeyboard::free(void)
 	super::free();
 }
 
-
 /*
  * Receive hotkey event (only down) and send keyboard down and up event
  * Limits the rate of event send to HID stack, otherwise the system slow down and the sound/sun bezel lags.
  */
-IOReturn FnKeysHIKeyboard::message( UInt32 type, IOService * provider, void * argument)
+IOReturn FnKeysHIKeyboard::message(UInt32 type, IOService * provider, void * argument)
 {
 	if (type == kIOACPIMessageDeviceNotification)
 	{
-		{
-			UInt32 code = *((UInt32 *) argument);
-			
-			
-			AbsoluteTime now;
-			clock_get_uptime((uint64_t *)(&now));
-			dispatchKeyboardEvent( code,
-								  /*direction*/ true,
-								  /*timeStamp*/ now );
-			
-			clock_get_uptime((uint64_t *)(&now));
-			dispatchKeyboardEvent( code,
-								  /*direction*/ false,
-								  /*timeStamp*/ now );
-                                  
-            //IOLog("Dispatched Key: %d %x\n",code,code);
-		}
+        UInt32 code = *((UInt32 *) argument);
+        
+        
+        AbsoluteTime now;
+        clock_get_uptime((uint64_t *)(&now));
+        dispatchKeyboardEvent(code,
+                              /*direction*/ true,
+                              /*timeStamp*/ now);
+        
+        clock_get_uptime((uint64_t *)(&now));
+        dispatchKeyboardEvent(code,
+                              /*direction*/ false,
+                              /*timeStamp*/ now);
 	}
+    else
+    {
+        DEBUG_LOG("%s::Unexpected message: %ull\n", getName(), *((UInt32 *) argument));
+    }
 	return kIOReturnSuccess;
 }
 
 #pragma mark -
 #pragma mark IOHIKeyboard override
 #pragma mark -
-
 
 //====================================================================================================
 // defaultKeymapOfLength - IOHIKeyboard override
@@ -139,35 +138,34 @@ const unsigned char * FnKeysHIKeyboard::defaultKeymapOfLength( UInt32 * length )
         // Special Key	  	SCANCODE
         //-----------------------------------------------------------        
 		
-        NX_KEYTYPE_SOUND_UP,		NX_KEYTYPE_SOUND_UP,
-        NX_KEYTYPE_SOUND_DOWN,		NX_KEYTYPE_SOUND_DOWN,
-        NX_KEYTYPE_BRIGHTNESS_UP,	NX_KEYTYPE_BRIGHTNESS_UP,
-        NX_KEYTYPE_BRIGHTNESS_DOWN,	NX_KEYTYPE_BRIGHTNESS_DOWN,
-        NX_KEYTYPE_CAPS_LOCK,		NX_KEYTYPE_CAPS_LOCK,
-        NX_KEYTYPE_HELP,		NX_KEYTYPE_HELP,
-        NX_POWER_KEY,			NX_POWER_KEY,
-        NX_KEYTYPE_MUTE,		NX_KEYTYPE_MUTE,
-        NX_UP_ARROW_KEY,		NX_UP_ARROW_KEY,
-        NX_DOWN_ARROW_KEY,		NX_DOWN_ARROW_KEY,
-        NX_KEYTYPE_NUM_LOCK,		NX_KEYTYPE_NUM_LOCK,
-        NX_KEYTYPE_CONTRAST_UP,		NX_KEYTYPE_CONTRAST_UP,
-        NX_KEYTYPE_CONTRAST_DOWN,	NX_KEYTYPE_CONTRAST_DOWN,
-        NX_KEYTYPE_LAUNCH_PANEL,	NX_KEYTYPE_LAUNCH_PANEL,
-        NX_KEYTYPE_EJECT,		NX_KEYTYPE_EJECT,
-        NX_KEYTYPE_VIDMIRROR,		NX_KEYTYPE_VIDMIRROR,
-        NX_KEYTYPE_PLAY,		NX_KEYTYPE_PLAY,
-        NX_KEYTYPE_NEXT,		NX_KEYTYPE_NEXT,
-        NX_KEYTYPE_PREVIOUS,		NX_KEYTYPE_PREVIOUS,
-        NX_KEYTYPE_FAST,		NX_KEYTYPE_FAST,
-        NX_KEYTYPE_REWIND,		NX_KEYTYPE_REWIND,
-        NX_KEYTYPE_ILLUMINATION_UP,	NX_KEYTYPE_ILLUMINATION_UP,
+        NX_KEYTYPE_SOUND_UP,		    NX_KEYTYPE_SOUND_UP,
+        NX_KEYTYPE_SOUND_DOWN,		    NX_KEYTYPE_SOUND_DOWN,
+        NX_KEYTYPE_BRIGHTNESS_UP,	    NX_KEYTYPE_BRIGHTNESS_UP,
+        NX_KEYTYPE_BRIGHTNESS_DOWN,	    NX_KEYTYPE_BRIGHTNESS_DOWN,
+        NX_KEYTYPE_CAPS_LOCK,		    NX_KEYTYPE_CAPS_LOCK,
+        NX_KEYTYPE_HELP,		        NX_KEYTYPE_HELP,
+        NX_POWER_KEY,			        NX_POWER_KEY,
+        NX_KEYTYPE_MUTE,		        NX_KEYTYPE_MUTE,
+        NX_UP_ARROW_KEY,		        NX_UP_ARROW_KEY,
+        NX_DOWN_ARROW_KEY,		        NX_DOWN_ARROW_KEY,
+        NX_KEYTYPE_NUM_LOCK,		    NX_KEYTYPE_NUM_LOCK,
+        NX_KEYTYPE_CONTRAST_UP,		    NX_KEYTYPE_CONTRAST_UP,
+        NX_KEYTYPE_CONTRAST_DOWN,	    NX_KEYTYPE_CONTRAST_DOWN,
+        NX_KEYTYPE_LAUNCH_PANEL,	    NX_KEYTYPE_LAUNCH_PANEL,
+        NX_KEYTYPE_EJECT,		        NX_KEYTYPE_EJECT,
+        NX_KEYTYPE_VIDMIRROR,		    NX_KEYTYPE_VIDMIRROR,
+        NX_KEYTYPE_PLAY,		        NX_KEYTYPE_PLAY,
+        NX_KEYTYPE_NEXT,		        NX_KEYTYPE_NEXT,
+        NX_KEYTYPE_PREVIOUS,		    NX_KEYTYPE_PREVIOUS,
+        NX_KEYTYPE_FAST,		        NX_KEYTYPE_FAST,
+        NX_KEYTYPE_REWIND,		        NX_KEYTYPE_REWIND,
+        NX_KEYTYPE_ILLUMINATION_UP,	    NX_KEYTYPE_ILLUMINATION_UP,
         NX_KEYTYPE_ILLUMINATION_DOWN,	NX_KEYTYPE_ILLUMINATION_DOWN,
         NX_KEYTYPE_ILLUMINATION_TOGGLE,	NX_KEYTYPE_ILLUMINATION_TOGGLE
 		
     };
-    
 	
-    if( length ) *length = sizeof( ConsumerKeyMap );
+    if(length) *length = sizeof(ConsumerKeyMap);
     
-    return( ConsumerKeyMap );
+    return(ConsumerKeyMap );
 }

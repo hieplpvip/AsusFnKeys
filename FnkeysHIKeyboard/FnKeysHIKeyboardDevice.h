@@ -26,14 +26,11 @@
 
 #include <IOKit/IOService.h>
 
-
 typedef struct  {
 	UInt16 in;
 	UInt8 out;
 	const char *description;
 } FnKeysKeyMap;
-
-
 
 class AsusFnKeys;
 
@@ -48,10 +45,8 @@ public:
 	virtual bool attach(IOService * provider);
 	virtual void detach(IOService * provider);
 	
-	void keyPressed(int code); 
-	
-	//IOReturn message( UInt32 type, IOService * provider, void * argument);
-
+	void keyPressed(int code);
+    
 	const FnKeysKeyMap * keyMap;
 	void setKeyMap(const FnKeysKeyMap * _keyMap);
 	

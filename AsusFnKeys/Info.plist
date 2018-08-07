@@ -52,7 +52,7 @@
 				<key>HasMediaButtons</key>
 				<false/>
 				<key>IdleKBacklightAutoOff</key>
-				<true/>
+				<false/>
 				<key>IdleKBacklightAutoOffTimeout</key>
 				<integer>10000</integer>
 				<key>KeyboardBLightLevelAtBoot</key>

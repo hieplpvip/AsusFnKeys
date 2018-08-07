@@ -25,9 +25,7 @@
 #include "FnKeysHIKeyboardDevice.h"
 #include "AsusFnKeys.h"
 
-#define DEBUG_START 0
-
-#if DEBUG_START
+#if DEBUG
 #define DEBUG_LOG(fmt, args...) IOLog(fmt, ## args)
 #else
 #define DEBUG_LOG(fmt, args...)
@@ -37,9 +35,9 @@
 OSDefineMetaClassAndStructors(FnKeysHIKeyboardDevice, IOService);
 
 
-bool FnKeysHIKeyboardDevice::attach( IOService * provider )
+bool FnKeysHIKeyboardDevice::attach(IOService * provider )
 {
-	if( !super::attach(provider) )  return false;
+	if (!super::attach(provider))  return false;
 	
 	FnKeys = OSDynamicCast(AsusFnKeys ,provider);
 	if (NULL == FnKeys)
@@ -50,8 +48,7 @@ bool FnKeysHIKeyboardDevice::attach( IOService * provider )
 	return true;
 }
 
-
-void FnKeysHIKeyboardDevice::detach( IOService * provider )
+void FnKeysHIKeyboardDevice::detach(IOService * provider )
 {
 	FnKeys->release();
 	FnKeys = 0;
@@ -59,23 +56,19 @@ void FnKeysHIKeyboardDevice::detach( IOService * provider )
 	super::detach(provider);
 }
 
-
-
 void FnKeysHIKeyboardDevice::keyPressed(int code)
 {
 	int i = 0, out;
 	do
-        
 	{
-        
 		if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
 		{
-			DEBUG_LOG("%s: Unknown key %02X i=%d\n",this->getName(), code, i);
+            DEBUG_LOG("%s::Unknown key %02X i=%d\n", getName(), code, i);
 			break;
 		}
 		if (keyMap[i].in == code)
 		{
-            DEBUG_LOG("%s: Key Pressed %02X i=%d\n",this->getName(), code, i);
+            DEBUG_LOG("%s::Key Pressed %02X i=%d\n", getName(), code, i);
 			out = keyMap[i].out;
 			messageClients(kIOACPIMessageDeviceNotification, &out);
 			break;
@@ -91,12 +84,12 @@ void FnKeysHIKeyboardDevice::setKeyMap(const FnKeysKeyMap *_keyMap)
 	int i = 0;
 	keyMap = _keyMap;
 	OSDictionary *dict = OSDictionary::withCapacity(10);
-	DEBUG_LOG("%s: Setting key %02X i=%d\n",this->getName(), keyMap[i].in, i);
+    DEBUG_LOG("%s::Setting key %02X i=%d\n", getName(), keyMap[i].in, i);
 	do
 	{
 		if (keyMap[i].description == NULL && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
 			break;
-        DEBUG_LOG("%s: Setting key %02X i=%d\n",this->getName(), keyMap[i].in, i);
+        DEBUG_LOG("%s::Setting key %02X i=%d\n", getName(), keyMap[i].in, i);
 		dict->setObject(keyMap[i].description, OSNumber::withNumber(keyMap[i].in,8));
 		i++;
 	}

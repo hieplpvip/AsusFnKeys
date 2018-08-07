@@ -218,13 +218,21 @@ protected:
     void parseConfig();
     void enableEvent();
     void disableEvent();
+    
     void handleMessage(int code);
     void processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount);
+    
     void enableALS(bool state);
     UInt32 processALS();
+    
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level, bool nvram = true);
+    
+    char backlightEntry[1000];
+    int checkBacklightEntry();
+    int findBacklightEntry();
     void readPanelBrightnessValue();
+    
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();
     
