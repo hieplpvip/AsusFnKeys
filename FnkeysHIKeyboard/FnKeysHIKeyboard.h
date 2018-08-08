@@ -50,4 +50,4 @@ public:
     virtual const unsigned char * defaultKeymapOfLength(UInt32 * length);
 };
 
-#endif
+#endif //_FnKeysHIDKeyboard_h

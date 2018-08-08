@@ -228,11 +228,13 @@ protected:
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level, bool nvram = true);
     
+    UInt32 panelBrightnessLevel;
     char backlightEntry[1000];
     int checkBacklightEntry();
     int findBacklightEntry();
     void readPanelBrightnessValue();
     
+    UInt8 keybrdBLightLvl, curKeybrdBlvl;
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();
     
@@ -247,9 +249,6 @@ protected:
     
     static const FnKeysKeyMap keyMap[];
     
-    UInt8 keybrdBLightLvl, curKeybrdBlvl;
-    UInt32 panelBrightnessLevel;
-    uint64_t keytime = 0;
     bool   touchpadEnabled;
     bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
     bool   isPanelBackLightOn;
@@ -263,6 +262,7 @@ protected:
     void autoOffTimer();
     void resetTimer();
     bool isautoOff, autoOffEnable;
+    uint64_t keytime = 0;
     uint64_t autoOffTimeout = 10000000000; // 10 seconds
     
     IONotifier* _publishNotify;

@@ -50,9 +50,7 @@ bool FnKeysHIKeyboardDevice::attach(IOService * provider )
 
 void FnKeysHIKeyboardDevice::detach(IOService * provider )
 {
-    FnKeys->release();
-    FnKeys = 0;
-    
+    OSSafeReleaseNULL(FnKeys);
     super::detach(provider);
 }
 

@@ -95,7 +95,7 @@ IOReturn FnKeysHIKeyboard::message(UInt32 type, IOService * provider, void * arg
     }
     else
     {
-        DEBUG_LOG("%s::Unexpected message: %ull\n", getName(), *((UInt32 *) argument));
+        DEBUG_LOG("%s::Unexpected message: %u Type %x Provider %s \n", getName(), *((UInt32 *) argument), uint(type), provider->getName());
     }
     return kIOReturnSuccess;
 }

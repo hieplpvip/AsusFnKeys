@@ -686,8 +686,8 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
         handleMessage(number->unsigned32BitValue());
     }
     else
-    {    // Someone unexpected is sending us messages!
-        DEBUG_LOG("%s::Unexpected message, Type %x Provider %s \n", getName(), uint(type), provider->getName());
+    {
+        DEBUG_LOG("%s::Unexpected message: %u Type %x Provider %s \n", getName(), *((UInt32 *) argument), uint(type), provider->getName());
     }
     
     return kIOReturnSuccess;
