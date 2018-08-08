@@ -225,6 +225,10 @@ protected:
     void enableALS(bool state);
     UInt32 processALS();
     
+    bool keybrdBLight16;
+    UInt8 keybrdBLightLvl, curKeybrdBlvl;
+    void saveKBBacklightToNVRAM(UInt8 level);
+    UInt8 readKBBacklightFromNVRAM();
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level, bool nvram = true);
     
@@ -233,10 +237,6 @@ protected:
     int checkBacklightEntry();
     int findBacklightEntry();
     void readPanelBrightnessValue();
-    
-    UInt8 keybrdBLightLvl, curKeybrdBlvl;
-    void saveKBBacklightToNVRAM(UInt8 level);
-    UInt8 readKBBacklightFromNVRAM();
     
     void getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);

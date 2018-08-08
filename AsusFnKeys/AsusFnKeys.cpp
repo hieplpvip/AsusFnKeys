@@ -356,6 +356,7 @@ const FnKeysKeyMap AsusFnKeys::keyMap[] = {
 
 bool AsusFnKeys::init(OSDictionary *dict)
 {
+    keybrdBLight16 = false;
     keybrdBLightLvl = 0; // Stating with Zero Level
     panelBrightnessLevel = 16; // Mac starts with level 16
     
@@ -573,13 +574,20 @@ void AsusFnKeys::parseConfig()
     if (WMIDevice->validateObject("SKBL") == kIOReturnSuccess && WMIDevice->validateObject("GKBL") == kIOReturnSuccess)
     {
         hasKeybrdBLight = true;
-        IOLog("%s::Keyboard backlight is supported\n", getName());
+        // Detect keyboard backlight levels
+        if (WMIDevice->validateObject("KBPW") == kIOReturnSuccess)
+            keybrdBLight16 = true;
+        else
+            keybrdBLight16 = false;
+        IOLog("%s::Keyboard backlight is supported with %d levels\n", getName(), keybrdBLight16?16:4);
     }
     else
     {
         hasKeybrdBLight = false;
         DEBUG_LOG("%s::Keyboard backlight is not supported\n", getName());
     }
+    
+    
     
     // Detect ALS sensor
     if (WMIDevice->validateObject("EALS") == kIOReturnSuccess && WMIDevice->validateObject("ALSS") == kIOReturnSuccess)
@@ -704,7 +712,7 @@ void AsusFnKeys::autoOffTimer()
     if (now_ns - keytime > autoOffTimeout && !isautoOff)
     {
         keybrdBLightLvl = getKeyboardBackLight();
-        if (keybrdBLightLvl) setKeyboardBackLight(0, false);
+        if (keybrdBLightLvl>0) setKeyboardBackLight(0, false);
         isautoOff = true;
     }
     
@@ -784,11 +792,6 @@ void AsusFnKeys::handleMessage(int code)
             
             break;
             
-        case 0x5E:
-        case 0x5F: // Wifi
-            code = 122;
-            break;
-            
         case 0x7A: // Fn + A, ALS Sensor
             isALSenabled = !isALSenabled;
             enableALS(isALSenabled);
@@ -823,10 +826,20 @@ void AsusFnKeys::handleMessage(int code)
         case 0xC4: // Fn + F4, Increase Keyboard Backlight
             if(hasKeybrdBLight)
             {
-                if(keybrdBLightLvl == 3)
-                    keybrdBLightLvl = 3;
+                if(keybrdBLight16)
+                {
+                    if(keybrdBLightLvl < 15)
+                        keybrdBLightLvl++;
+                    else
+                        keybrdBLightLvl = 15;
+                }
                 else
-                    keybrdBLightLvl++;
+                {
+                    if(keybrdBLightLvl < 3)
+                        keybrdBLightLvl++;
+                    else
+                        keybrdBLightLvl = 3;
+                }
             }
             break;
             
