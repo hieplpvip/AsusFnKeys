@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.apple.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.hieplpvip.${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -17,17 +17,17 @@
 	<key>CFBundlePackageType</key>
 	<string>KEXT</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>IOKitPersonalities</key>
 	<dict>
 		<key>AsusFnKeys</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
-			<string>com.apple.${PRODUCT_NAME:rfc1034identifier}</string>
+			<string>com.hieplpvip.${PRODUCT_NAME:rfc1034identifier}</string>
 			<key>IOClass</key>
 			<string>AsusFnKeys</string>
 			<key>IONameMatch</key>
@@ -66,7 +66,7 @@
 		<key>FnKeysHIKeyboard</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
-			<string>com.apple.${PRODUCT_NAME:rfc1034identifier}</string>
+			<string>com.hieplpvip.${PRODUCT_NAME:rfc1034identifier}</string>
 			<key>IOClass</key>
 			<string>FnKeysHIKeyboard</string>
 			<key>IONameMatch</key>
@@ -82,17 +82,17 @@
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>com.apple.iokit.IOACPIFamily</key>
-		<string>1.0.0d1</string>
+		<string>1.2</string>
 		<key>com.apple.iokit.IOHIDSystem</key>
 		<string>1.6.5</string>
 		<key>com.apple.kpi.bsd</key>
-		<string>10.0.0</string>
+		<string>14</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>9.6.0</string>
+		<string>14</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>9.6.0</string>
+		<string>14</string>
 		<key>com.apple.kpi.unsupported</key>
-		<string>9.6.0</string>
+		<string>14</string>
 	</dict>
 </dict>
 </plist>

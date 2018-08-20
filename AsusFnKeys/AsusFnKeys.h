@@ -37,6 +37,7 @@
 #include <libkern/OSTypes.h>
 
 #include "FnKeysHIKeyboardDevice.h"
+#include "KernEventServer.h"
 
 struct guid_block {
     char guid[16];
@@ -170,6 +171,8 @@ static IOPMPowerState powerStateArray[kAsusFnKeysIOPMNumberPowerStates] =
     { 1,kIOPMPowerOn,IOPMPowerOn,IOPMPowerOn,0,0,0,0,0,0,0,0 }
 };
 
+#define AsusFnKeysEventCode 0x8102
+
 const UInt8 NOTIFY_BRIGHTNESS_UP_MIN = 0x10;
 const UInt8 NOTIFY_BRIGHTNESS_UP_MAX = 0x1F;
 
@@ -195,6 +198,7 @@ class AsusFnKeys : public IOService
 protected:
     IOACPIPlatformDevice * WMIDevice;
     FnKeysHIKeyboardDevice * _keyboardDevice;
+    KernEventServer kev;
     
     OSDictionary * properties;
     
@@ -230,7 +234,7 @@ protected:
     void saveKBBacklightToNVRAM(UInt8 level);
     UInt8 readKBBacklightFromNVRAM();
     UInt8 getKeyboardBackLight();
-    void setKeyboardBackLight(UInt8 level, bool nvram = true);
+    void setKeyboardBackLight(UInt8 level, bool nvram = true, bool display = false);
     
     UInt32 panelBrightnessLevel;
     char backlightEntry[1000];

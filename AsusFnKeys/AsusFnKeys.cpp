@@ -2,7 +2,7 @@
  *  Copyright (c) 2012 - 2013 EMlyDinEsH(OSXLatitude). All rights reserved.
  *  Copyright (c) 2018 hieplpvip
  *
- *  Asus Fn keys Driver v1.0.0 by hieplpvip for macOS 10.13
+ *  Asus Fn keys Driver v1.0.2 by hieplpvip for macOS 10.13
  *
  *  Credits: EMlyDinEsH(OSXLatitude) for initial driver
  *
@@ -371,6 +371,9 @@ bool AsusFnKeys::init(OSDictionary *dict)
     autoOffEnable = true;
     
     _notificationServices = OSSet::withCapacity(1);
+    
+    kev.setVendorID("com.hieplpvip");
+    kev.setEventCode(AsusFnKeysEventCode);
     
     bool result = super::init(dict);
     properties = dict;
@@ -867,7 +870,7 @@ void AsusFnKeys::handleMessage(int code)
     DEBUG_LOG("%s::Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
     if (hasKeybrdBLight)
-        setKeyboardBackLight(keybrdBLightLvl);
+        setKeyboardBackLight(keybrdBLightLvl, true, true);
     
     // have media buttons then skip C, V and Space & ALS sensor keys events
     if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7))
@@ -949,7 +952,7 @@ UInt8 AsusFnKeys::getKeyboardBackLight()
     }
 }
 
-void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram)
+void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram, bool display)
 {
     if (WMIDevice->validateObject("SKBL") != kIOReturnSuccess)
         DEBUG_LOG("%s::Keyboard backlight not found\n", getName());
@@ -966,6 +969,12 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram)
         }
         
         if (nvram) saveKBBacklightToNVRAM(level);
+        
+        if (display)
+        {
+            kev.sendMessage(1, level, keybrdBLight16?16:3);
+            DEBUG_LOG("%s::Sent message to user space daemon\n", getName());
+        }
         
         curKeybrdBlvl = level;
         
