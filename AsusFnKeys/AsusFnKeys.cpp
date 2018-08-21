@@ -796,6 +796,10 @@ void AsusFnKeys::handleMessage(int code)
             
             break;
             
+        case 0x5E:
+            kev.sendMessage(kevSleep, 0, 0);
+            break;
+            
         case 0x7A: // Fn + A, ALS Sensor
             isALSenabled = !isALSenabled;
             enableALS(isALSenabled);
@@ -880,7 +884,7 @@ void AsusFnKeys::handleMessage(int code)
         setKeyboardBackLight(keybrdBLightLvl, true, show);
     
     // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x7d))
+    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x7d || code == 0x5e))
         return;
     
     // Sending the code for the keyboard handler

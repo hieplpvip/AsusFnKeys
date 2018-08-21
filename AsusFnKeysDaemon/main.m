@@ -10,12 +10,27 @@
 
 #import <Cocoa/Cocoa.h>
 #import <CoreWLAN/CoreWLAN.h>
+#import <CoreServices/CoreServices.h>
 #import <sys/ioctl.h>
 #import <sys/socket.h>
 #import <sys/kern_event.h>
 #import "BezelServices.h"
 #import "OSD.h"
 #include <dlfcn.h>
+
+/*
+ *    kAERestart        will cause system to restart
+ *    kAEShutDown       will cause system to shutdown
+ *    kAEReallyLogout   will cause system to logout
+ *    kAESleep          will cause system to sleep
+ */
+extern OSStatus MDSendAppleEventToSystemProcess(AEEventID eventToSend);
+
+// requires IOBluetooth.framework
+void IOBluetoothPreferenceSetControllerPowerState(int);
+int IOBluetoothPreferenceGetControllerPowerState();
+
+static void *(*_BSDoGraphicWithMeterAndTimeout)(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, float v, int timeout) = NULL;
 
 enum
 {
@@ -25,20 +40,15 @@ enum
     kevTouchpad = 4,
 };
 
-// requires IOBluetooth.framework
-void IOBluetoothPreferenceSetControllerPowerState(int);
-int IOBluetoothPreferenceGetControllerPowerState();
-
-static void *(*_BSDoGraphicWithMeterAndTimeout)(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, float v, int timeout) = NULL;
-
-u_int32_t vendorID = 0;
-
 struct AsusFnKeysMessage
 {
     int type;
     int x;
     int y;
 };
+
+const int kMaxDisplays = 16;
+u_int32_t vendorID = 0;
 
 bool _loadBezelServices()
 {
@@ -59,8 +69,58 @@ bool _loadOSDFramework()
     return [[NSBundle bundleWithPath:@"/System/Library/PrivateFrameworks/OSD.framework"] load];
 }
 
+OSStatus MDSendAppleEventToSystemProcess(AEEventID eventToSendID) {
+    AEAddressDesc targetDesc;
+    static const ProcessSerialNumber kPSNOfSystemProcess = {0, kSystemProcess };
+    AppleEvent eventReply = {typeNull, NULL};
+    AppleEvent eventToSend = {typeNull, NULL};
+    
+    OSStatus status = AECreateDesc(typeProcessSerialNumber,
+                                   &kPSNOfSystemProcess, sizeof(kPSNOfSystemProcess), &targetDesc);
+    
+    if (status != noErr) return status;
+    
+    status = AECreateAppleEvent(kCoreEventClass, eventToSendID,
+                                &targetDesc, kAutoGenerateReturnID, kAnyTransactionID, &eventToSend);
+    
+    AEDisposeDesc(&targetDesc);
+    
+    if (status != noErr) return status;
+    
+    status = AESendMessage(&eventToSend, &eventReply,
+                           kAENormalPriority, kAEDefaultTimeout);
+    
+    AEDisposeDesc(&eventToSend);
+    if (status != noErr) return status;
+    AEDisposeDesc(&eventReply);
+    return status;
+}
+
+CGDirectDisplayID getMainDisplay()
+{
+    CGDirectDisplayID display[kMaxDisplays];
+    CGDisplayCount numDisplays;
+    CGDisplayErr err;
+    err = CGGetOnlineDisplayList(kMaxDisplays, display, &numDisplays);
+    if (err != CGDisplayNoErr)
+    {
+        printf("cannot get list of displays (error %d)\n", err);
+        return 0;
+    }
+    for (CGDisplayCount i = 0; i < numDisplays; ++i)
+    {
+        CGDirectDisplayID dspy = display[i];
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(dspy);
+        if (mode == NULL)
+            continue;
+        if (CGDisplayIsMain(dspy))
+            return dspy;
+    }
+    return 0;
+}
 void showKBoardBLightStatus(int level, int max)
 {
+    //CGDirectDisplayID currentDisplayId = getMainDisplay();
     CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
     if (_BSDoGraphicWithMeterAndTimeout != NULL)
     {
@@ -91,6 +151,7 @@ void showKBoardBLightStatus(int level, int max)
 
 void showAirplaneStatus(bool enabled)
 {
+    //CGDirectDisplayID currentDisplayId = getMainDisplay();
     CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
     if (_BSDoGraphicWithMeterAndTimeout != NULL)
     {
@@ -102,6 +163,18 @@ void showAirplaneStatus(bool enabled)
             [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode on"];
         //else
         //    [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode off"];
+    }
+}
+
+void goToSleep()
+{
+    if (_BSDoGraphicWithMeterAndTimeout != NULL) // El Capitan and probably older systems
+        MDSendAppleEventToSystemProcess(kAESleep);
+    else
+    {
+        //CGDirectDisplayID currentDisplayId = getMainDisplay();
+        CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
+        [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicSleep onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000];
     }
 }
 
@@ -214,12 +287,13 @@ int main(int argc, const char * argv[]) {
             switch (message->type)
             {
                 case kevKeyboardBacklight:
-                {
                     showKBoardBLightStatus(message->x, message->y);
                     break;
-                }
                 case kevAirplaneMode:
                     toggleAirplaneMode();
+                    break;
+                case kevSleep:
+                    goToSleep();
                     break;
                 default:
                     printf("unknown type %d\n", message->type);

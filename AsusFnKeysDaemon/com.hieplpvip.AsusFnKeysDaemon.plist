@@ -10,6 +10,10 @@
 	<true/>
 	<key>ProgramArguments</key>
 	<array>
+		<string>open</string>
+		<string>-h</string>
+		<string>-g</string>
+		<string>-a</string>
 		<string>/usr/bin/AsusFnKeysDaemon</string>
 	</array>
 	<key>StandardOutPath</key>
