@@ -1,9 +1,9 @@
 //
 //  BezelServices.h
-//  NativeDisplayBrightness
+//  AsusFnKeysDaemon
 //
-//  Created by Benno Krauss on 19.10.16.
-//  Copyright © 2016 Benno Krauss. All rights reserved.
+//  Created by Le Bao Hiep on 8/20/18.
+//  Copyright © 2018 Le Bao Hiep. All rights reserved.
 //
 
 #ifndef BezelServices_h
@@ -31,5 +31,6 @@ typedef enum {
 } BSGraphic;
 
 extern void *BSDoGraphicWithMessage(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, const char *arg3, int length);
+extern void *BSDoGraphicWithMeterAndTimeout(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, float v, int timeout);
 
 #endif /* BezelServices_h */

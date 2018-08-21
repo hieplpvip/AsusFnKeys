@@ -3,7 +3,7 @@
 //  AsusFnKeys
 //
 //  Created by Le Bao Hiep on 8/18/18.
-//  Copyright © 2018 Apple. All rights reserved.
+//  Copyright © 2018 Le Bao Hiep. All rights reserved.
 //
 
 #include "KernEventServer.h"

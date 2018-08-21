@@ -13,6 +13,8 @@
 		270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */; };
 		27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 27F96E0116333B72003A6255 /* AsusFnKeys.cpp */; };
 		4C0FAD28212B29680016CFFB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0FAD27212B29680016CFFB /* main.m */; };
+		4C115058212BBE7E00888D25 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C115057212BBE7E00888D25 /* CoreWLAN.framework */; };
+		4C11505A212BCA6300888D25 /* IOBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C115059212BCA6300888D25 /* IOBluetooth.framework */; };
 		4C1FD87A212B275600FB5745 /* KernEventServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1FD878212B275600FB5745 /* KernEventServer.cpp */; };
 		4C1FD87B212B275600FB5745 /* KernEventServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1FD879212B275600FB5745 /* KernEventServer.h */; };
 /* End PBXBuildFile section */
@@ -51,6 +53,8 @@
 		4C0FAD27212B29680016CFFB /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4C0FAD2C212B2A0B0016CFFB /* OSD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OSD.h; sourceTree = "<group>"; };
 		4C0FAD2D212B2A0B0016CFFB /* BezelServices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BezelServices.h; sourceTree = "<group>"; };
+		4C115057212BBE7E00888D25 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
+		4C115059212BCA6300888D25 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
 		4C1FD878212B275600FB5745 /* KernEventServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KernEventServer.cpp; sourceTree = "<group>"; };
 		4C1FD879212B275600FB5745 /* KernEventServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KernEventServer.h; sourceTree = "<group>"; };
 		4C21E329212B34F400260AEA /* com.hieplpvip.AsusFnKeysDaemon.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.hieplpvip.AsusFnKeysDaemon.plist; sourceTree = "<group>"; };
@@ -68,6 +72,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C11505A212BCA6300888D25 /* IOBluetooth.framework in Frameworks */,
+				4C115058212BBE7E00888D25 /* CoreWLAN.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +89,7 @@
 				4C0FAD26212B29680016CFFB /* AsusFnKeysDaemon */,
 				27F96DF616333B72003A6255 /* Products */,
 				27F96DFC16333B72003A6255 /* Info.plist */,
+				4C115056212BBE7E00888D25 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -113,6 +120,15 @@
 				4C21E329212B34F400260AEA /* com.hieplpvip.AsusFnKeysDaemon.plist */,
 			);
 			path = AsusFnKeysDaemon;
+			sourceTree = "<group>";
+		};
+		4C115056212BBE7E00888D25 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4C115059212BCA6300888D25 /* IOBluetooth.framework */,
+				4C115057212BBE7E00888D25 /* CoreWLAN.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		4C1FD877212B273700FB5745 /* KernEventServer */ = {
@@ -195,14 +211,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0450;
-				ORGANIZATIONNAME = Apple;
-				TargetAttributes = {
-					4C0FAD24212B29680016CFFB = {
-						CreatedOnToolsVersion = 9.4.1;
-						DevelopmentTeam = 2KGA95769D;
-						ProvisioningStyle = Automatic;
-					};
-				};
+				ORGANIZATIONNAME = "Le Bao Hiep";
 			};
 			buildConfigurationList = 27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusFnKeys" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -363,24 +372,17 @@
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MODULE_NAME = com.hieplpvip.AsusFnKeysDaemon;
 				MODULE_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -408,25 +410,18 @@
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MODULE_NAME = com.hieplpvip.AsusFnKeysDaemon;
 				MODULE_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 			};
 			name = Release;
 		};

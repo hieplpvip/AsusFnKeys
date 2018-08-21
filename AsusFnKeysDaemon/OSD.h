@@ -1,9 +1,9 @@
 //
 //  OSD.h
-//  NativeDisplayBrightness
+//  AsusFnKeysDaemon
 //
-//  Created by Benno Krauss on 23.10.16.
-//  Copyright © 2016 Benno Krauss. All rights reserved.
+//  Created by Le Bao Hiep on 8/20/18.
+//  Copyright © 2018 Le Bao Hiep. All rights reserved.
 //
 
 #ifndef OSD_h

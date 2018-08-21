@@ -191,6 +191,14 @@ enum
     kKeyboardModifierKeyPressTime = iokit_vendor_specific_msg(111),  // notify of timestamp a key was pressed (data is uint64_t*)
 };
 
+enum
+{
+    kevKeyboardBacklight = 1,
+    kevAirplaneMode = 2,
+    kevSleep = 3,
+    kevTouchpad = 4,
+};
+
 class AsusFnKeys : public IOService
 {
     OSDeclareDefaultStructors(AsusFnKeys)

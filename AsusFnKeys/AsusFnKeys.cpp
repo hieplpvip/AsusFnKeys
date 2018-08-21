@@ -734,6 +734,7 @@ void AsusFnKeys::handleMessage(int code)
 {
     loopCount = kLoopCount = 0;
     alsMode = false;
+    bool show = false;
     
     resetTimer();
     
@@ -800,6 +801,10 @@ void AsusFnKeys::handleMessage(int code)
             enableALS(isALSenabled);
             break;
             
+        case 0x7D: // Airplane mode
+            kev.sendMessage(kevAirplaneMode, 0, 0);
+            break;
+            
         case 0xC6: // ALS Notifcations
             if(hasALSensor)
             {
@@ -823,6 +828,7 @@ void AsusFnKeys::handleMessage(int code)
                     keybrdBLightLvl--;
                 else
                     keybrdBLightLvl = 0;
+                show = true;
             }
             break;
             
@@ -843,6 +849,7 @@ void AsusFnKeys::handleMessage(int code)
                     else
                         keybrdBLightLvl = 3;
                 }
+                show = true;
             }
             break;
             
@@ -870,10 +877,10 @@ void AsusFnKeys::handleMessage(int code)
     DEBUG_LOG("%s::Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
     
     if (hasKeybrdBLight)
-        setKeyboardBackLight(keybrdBLightLvl, true, true);
+        setKeyboardBackLight(keybrdBLightLvl, true, show);
     
     // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7))
+    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x7d))
         return;
     
     // Sending the code for the keyboard handler
@@ -972,7 +979,7 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram, bool display)
         
         if (display)
         {
-            kev.sendMessage(1, level, keybrdBLight16?16:3);
+            kev.sendMessage(kevKeyboardBacklight, level, keybrdBLight16?16:3);
             DEBUG_LOG("%s::Sent message to user space daemon\n", getName());
         }
         
@@ -1321,6 +1328,8 @@ void AsusFnKeys::enableEvent()
                 isALSenabled = false;
                 enableALS(isALSenabled);
             }
+            
+            isAirplane = false;
             
             IOLog("%s::Asus Fn Hotkey Events Enabled\n", getName());
             

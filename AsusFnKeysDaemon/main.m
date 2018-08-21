@@ -3,7 +3,7 @@
 //  AsusFnKeysDaemon
 //
 //  Created by Le Bao Hiep on 8/20/18.
-//  Copyright © 2018 Apple. All rights reserved.
+//  Copyright © 2018 Le Bao Hiep. All rights reserved.
 //
 
 #if DEBUG
@@ -15,12 +15,24 @@
 #define AsusFnKeysEventCode 0x8102
 
 #import <Cocoa/Cocoa.h>
+#import <CoreWLAN/CoreWLAN.h>
 #import <sys/ioctl.h>
 #import <sys/socket.h>
 #import <sys/kern_event.h>
 #import "BezelServices.h"
 #import "OSD.h"
 #include <dlfcn.h>
+
+enum
+{
+    kevKeyboardBacklight = 1,
+    kevAirplaneMode = 2,
+    kevSleep = 3,
+    kevTouchpad = 4,
+};
+
+// requires IOBluetooth.framework
+void IOBluetoothPreferenceSetControllerPowerState(int);
 
 static void *(*_BSDoGraphicWithMeterAndTimeout)(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, float v, int timeout) = NULL;
 
@@ -80,6 +92,39 @@ void showKBoardBLightStatus(int level, int max)
                                                           totalChiclets:max
                                                                  locked:NO];
     }
+}
+
+void showAirplaneStatus(bool enabled)
+{
+    CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
+    if (_BSDoGraphicWithMeterAndTimeout != NULL)
+    {
+        // El Capitan and probably older systems
+    }
+    else {
+        // Sierra+
+        if(enabled)
+            [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode on"];
+        //else
+        //    [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode off"];
+    }
+}
+
+bool airplaneModeEnabled = false;
+void toggleAirplaneMode()
+{
+    airplaneModeEnabled = !airplaneModeEnabled;
+    
+    // turn Wifi off
+    CWWiFiClient *wifiClient = CWWiFiClient.sharedWiFiClient;
+    CWInterface *currentInterface = [wifiClient interface];
+    NSError *err = nil;
+    [currentInterface setPower:(airplaneModeEnabled)?NO:YES error:&err];
+    
+    // turn Bluetooth off
+    IOBluetoothPreferenceSetControllerPowerState(airplaneModeEnabled?0:1);
+    
+    showAirplaneStatus(airplaneModeEnabled);
 }
 
 int main(int argc, const char * argv[]) {
@@ -162,7 +207,19 @@ int main(int argc, const char * argv[]) {
         
         printf("type:%d x:%d y:%d\n", message->type, message->x, message->y);
         
-        showKBoardBLightStatus(message->x, message->y);
+        switch (message->type)
+        {
+            case kevKeyboardBacklight:
+            {
+                showKBoardBLightStatus(message->x, message->y);
+                break;
+            }
+            case kevAirplaneMode:
+                toggleAirplaneMode();
+                break;
+            default:
+                printf("unknown type %d\n", message->type);
+        }
     }
     
     return 0;
