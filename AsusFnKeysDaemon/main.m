@@ -6,12 +6,6 @@
 //  Copyright © 2018 Le Bao Hiep. All rights reserved.
 //
 
-#if DEBUG
-#define DEBUG_LOG(fmt, args...) IOLog(fmt, ## args)
-#else
-#define DEBUG_LOG(fmt, args...)
-#endif
-
 #define AsusFnKeysEventCode 0x8102
 
 #import <Cocoa/Cocoa.h>
@@ -33,6 +27,7 @@ enum
 
 // requires IOBluetooth.framework
 void IOBluetoothPreferenceSetControllerPowerState(int);
+int IOBluetoothPreferenceGetControllerPowerState();
 
 static void *(*_BSDoGraphicWithMeterAndTimeout)(CGDirectDisplayID arg0, BSGraphic arg1, int arg2, float v, int timeout) = NULL;
 
@@ -110,115 +105,125 @@ void showAirplaneStatus(bool enabled)
     }
 }
 
-bool airplaneModeEnabled = false;
+BOOL airplaneModeEnabled = NO, lastWifiState;
+int lastBluetoothState;
 void toggleAirplaneMode()
 {
     airplaneModeEnabled = !airplaneModeEnabled;
     
-    // turn Wifi off
-    CWWiFiClient *wifiClient = CWWiFiClient.sharedWiFiClient;
-    CWInterface *currentInterface = [wifiClient interface];
+    CWInterface *currentInterface = [CWWiFiClient.sharedWiFiClient interface];
     NSError *err = nil;
-    [currentInterface setPower:(airplaneModeEnabled)?NO:YES error:&err];
     
-    // turn Bluetooth off
-    IOBluetoothPreferenceSetControllerPowerState(airplaneModeEnabled?0:1);
+    if(airplaneModeEnabled)
+    {
+        lastWifiState = currentInterface.powerOn;
+        lastBluetoothState = IOBluetoothPreferenceGetControllerPowerState();
+        [currentInterface setPower:NO error:&err];
+        IOBluetoothPreferenceSetControllerPowerState(0);
+    }
+    else
+    {
+        [currentInterface setPower:lastWifiState error:&err];
+        IOBluetoothPreferenceSetControllerPowerState(lastBluetoothState);
+    }
     
-    showAirplaneStatus(airplaneModeEnabled);
+    //showAirplaneStatus(airplaneModeEnabled);
 }
 
 int main(int argc, const char * argv[]) {
-    printf("daemon started...\n");
-    
-    if (!_loadBezelServices())
-    {
-        _loadOSDFramework();
-    }
-    
-    //system socket
-    int systemSocket = -1;
-    
-    //create system socket to receive kernel event data
-    systemSocket = socket(PF_SYSTEM, SOCK_RAW, SYSPROTO_EVENT);
-    
-    //struct for vendor code
-    // ->set via call to ioctl/SIOCGKEVVENDOR
-    struct kev_vendor_code vendorCode = {0};
-    
-    //set vendor name string
-    strncpy(vendorCode.vendor_string, "com.hieplpvip", KEV_VENDOR_CODE_MAX_STR_LEN);
-    
-    //get vendor name -> vendor code mapping
-    // ->vendor id, saved in 'vendorCode' variable
-    ioctl(systemSocket, SIOCGKEVVENDOR, &vendorCode);
-    
-    //struct for kernel request
-    // ->set filtering options
-    struct kev_request kevRequest = {0};
-    
-    //init filtering options
-    // ->only interested in objective-see's events kevRequest.vendor_code = vendorCode.vendor_code;
-    
-    //...any class
-    kevRequest.kev_class = KEV_ANY_CLASS;
-    
-    //...any subclass
-    kevRequest.kev_subclass = KEV_ANY_SUBCLASS;
-    
-    //tell kernel what we want to filter on
-    ioctl(systemSocket, SIOCSKEVFILT, &kevRequest);
-    
-    //bytes received from system socket
-    ssize_t bytesReceived = -1;
-    
-    //message from kext
-    // ->size is cumulation of header, struct, and max length of a proc path
-    char kextMsg[KEV_MSG_HEADER_SIZE + sizeof(struct AsusFnKeysMessage)] = {0};
-    
-    struct AsusFnKeysMessage* message = NULL;
-    
-    while(YES)
-    {
-        //printf("listening...\n");
+    @autoreleasepool {
+        printf("daemon started...\n");
         
-        bytesReceived = recv(systemSocket, kextMsg, sizeof(kextMsg), 0);
-        
-        if (bytesReceived != sizeof(kextMsg)) continue;
-        
-        //struct for broadcast data from the kext
-        struct kern_event_msg *kernEventMsg = {0};
-        
-        //type cast
-        // ->to access kev_event_msg header
-        kernEventMsg = (struct kern_event_msg*)kextMsg;
-        
-        //only care about 'process began' events
-        if(AsusFnKeysEventCode != kernEventMsg->event_code)
+        if (!_loadBezelServices())
         {
-            //skip
-            continue;
+            _loadOSDFramework();
         }
         
-        //printf("new message\n");
+        //system socket
+        int systemSocket = -1;
         
-        //typecast custom data
-        // ->begins right after header
-        message = (struct AsusFnKeysMessage*)&kernEventMsg->event_data[0];
+        //create system socket to receive kernel event data
+        systemSocket = socket(PF_SYSTEM, SOCK_RAW, SYSPROTO_EVENT);
         
-        printf("type:%d x:%d y:%d\n", message->type, message->x, message->y);
+        //struct for vendor code
+        // ->set via call to ioctl/SIOCGKEVVENDOR
+        struct kev_vendor_code vendorCode = {0};
         
-        switch (message->type)
+        //set vendor name string
+        strncpy(vendorCode.vendor_string, "com.hieplpvip", KEV_VENDOR_CODE_MAX_STR_LEN);
+        
+        //get vendor name -> vendor code mapping
+        // ->vendor id, saved in 'vendorCode' variable
+        ioctl(systemSocket, SIOCGKEVVENDOR, &vendorCode);
+        
+        //struct for kernel request
+        // ->set filtering options
+        struct kev_request kevRequest = {0};
+        
+        //init filtering options
+        // ->only interested in objective-see's events kevRequest.vendor_code = vendorCode.vendor_code;
+        
+        //...any class
+        kevRequest.kev_class = KEV_ANY_CLASS;
+        
+        //...any subclass
+        kevRequest.kev_subclass = KEV_ANY_SUBCLASS;
+        
+        //tell kernel what we want to filter on
+        ioctl(systemSocket, SIOCSKEVFILT, &kevRequest);
+        
+        //bytes received from system socket
+        ssize_t bytesReceived = -1;
+        
+        //message from kext
+        // ->size is cumulation of header, struct, and max length of a proc path
+        char kextMsg[KEV_MSG_HEADER_SIZE + sizeof(struct AsusFnKeysMessage)] = {0};
+        
+        struct AsusFnKeysMessage* message = NULL;
+        
+        while(YES)
         {
-            case kevKeyboardBacklight:
+            //printf("listening...\n");
+            
+            bytesReceived = recv(systemSocket, kextMsg, sizeof(kextMsg), 0);
+            
+            if (bytesReceived != sizeof(kextMsg)) continue;
+            
+            //struct for broadcast data from the kext
+            struct kern_event_msg *kernEventMsg = {0};
+            
+            //type cast
+            // ->to access kev_event_msg header
+            kernEventMsg = (struct kern_event_msg*)kextMsg;
+            
+            //only care about 'process began' events
+            if(AsusFnKeysEventCode != kernEventMsg->event_code)
             {
-                showKBoardBLightStatus(message->x, message->y);
-                break;
+                //skip
+                continue;
             }
-            case kevAirplaneMode:
-                toggleAirplaneMode();
-                break;
-            default:
-                printf("unknown type %d\n", message->type);
+            
+            //printf("new message\n");
+            
+            //typecast custom data
+            // ->begins right after header
+            message = (struct AsusFnKeysMessage*)&kernEventMsg->event_data[0];
+            
+            printf("type:%d x:%d y:%d\n", message->type, message->x, message->y);
+            
+            switch (message->type)
+            {
+                case kevKeyboardBacklight:
+                {
+                    showKBoardBLightStatus(message->x, message->y);
+                    break;
+                }
+                case kevAirplaneMode:
+                    toggleAirplaneMode();
+                    break;
+                default:
+                    printf("unknown type %d\n", message->type);
+            }
         }
     }
     
