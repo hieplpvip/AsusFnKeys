@@ -1329,10 +1329,7 @@ void AsusFnKeys::enableEvent()
                 enableALS(isALSenabled);
             }
             
-            isAirplane = false;
-            
             IOLog("%s::Asus Fn Hotkey Events Enabled\n", getName());
-            
         }
     }
 }
