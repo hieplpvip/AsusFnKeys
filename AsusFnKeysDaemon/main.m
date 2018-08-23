@@ -118,51 +118,37 @@ CGDirectDisplayID getMainDisplay()
     }
     return 0;
 }
-void showKBoardBLightStatus(int level, int max)
+
+void showBezelServices(BSGraphic image, float filled)
 {
     //CGDirectDisplayID currentDisplayId = getMainDisplay();
     CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
-    if (_BSDoGraphicWithMeterAndTimeout != NULL)
-    {
-        // El Capitan and probably older systems
-        if (level)
-            _BSDoGraphicWithMeterAndTimeout(currentDisplayId, BSGraphicKeyboardBacklightMeter, 0x0, (float)level/max, 1);
-        else
-            _BSDoGraphicWithMeterAndTimeout(currentDisplayId, BSGraphicKeyboardBacklightDisabledMeter, 0x0, 0, 1);
-    }
-    else {
-        // Sierra+
-        if (level)
-            [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicKeyboardBacklightMeter
-                                                            onDisplayID:currentDisplayId priority:OSDPriorityDefault
-                                                          msecUntilFade:1000
-                                                         filledChiclets:(float)level
-                                                          totalChiclets:max
-                                                                 locked:NO];
-        else
-            [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicKeyboardBacklightDisabledMeter
-                                                            onDisplayID:currentDisplayId priority:OSDPriorityDefault
-                                                          msecUntilFade:1000
-                                                         filledChiclets:0
-                                                          totalChiclets:max
-                                                                 locked:NO];
-    }
+    _BSDoGraphicWithMeterAndTimeout(currentDisplayId, image, 0x0, filled, 1);
 }
 
-void showAirplaneStatus(bool enabled)
+void showOSD(OSDGraphic image, int filled, int total)
 {
     //CGDirectDisplayID currentDisplayId = getMainDisplay();
     CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
+    [[NSClassFromString(@"OSDManager") sharedManager] showImage:image onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 filledChiclets:filled totalChiclets:total locked:NO];
+}
+
+void showKBoardBLightStatus(int level, int max)
+{
     if (_BSDoGraphicWithMeterAndTimeout != NULL)
     {
         // El Capitan and probably older systems
+        if (level)
+            showBezelServices(BSGraphicKeyboardBacklightMeter, (float)level/max);
+        else
+            showBezelServices(BSGraphicKeyboardBacklightDisabledMeter, 0);
     }
     else {
         // Sierra+
-        if(enabled)
-            [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode on"];
-        //else
-        //    [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicNoWiFi onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000 withText:@"Airplane Mode off"];
+        if (level)
+            showOSD(OSDGraphicKeyboardBacklightMeter, level, max);
+        else
+            showOSD(OSDGraphicKeyboardBacklightDisabledMeter, level, max);
     }
 }
 
@@ -172,7 +158,7 @@ void goToSleep()
         MDSendAppleEventToSystemProcess(kAESleep);
     else
     {
-        //CGDirectDisplayID currentDisplayId = getMainDisplay();
+        // Sierra+
         CGDirectDisplayID currentDisplayId = [NSScreen.mainScreen.deviceDescription [@"NSScreenNumber"] unsignedIntValue];
         [[NSClassFromString(@"OSDManager") sharedManager] showImage:OSDGraphicSleep onDisplayID:currentDisplayId priority:OSDPriorityDefault msecUntilFade:1000];
     }
@@ -199,8 +185,6 @@ void toggleAirplaneMode()
         [currentInterface setPower:lastWifiState error:&err];
         IOBluetoothPreferenceSetControllerPowerState(lastBluetoothState);
     }
-    
-    //showAirplaneStatus(airplaneModeEnabled);
 }
 
 int main(int argc, const char * argv[]) {
