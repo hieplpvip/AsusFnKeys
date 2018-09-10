@@ -593,7 +593,7 @@ void AsusFnKeys::parseConfig()
     
     
     // Detect ALS sensor
-    if (WMIDevice->validateObject("EALS") == kIOReturnSuccess && WMIDevice->validateObject("ALSS") == kIOReturnSuccess)
+    if (WMIDevice->validateObject("ALSC") == kIOReturnSuccess && WMIDevice->validateObject("ALSS") == kIOReturnSuccess)
     {
         hasALSensor = true;
         IOLog("%s::Found ALS sensor\n", getName());
@@ -926,7 +926,7 @@ void AsusFnKeys::enableALS(bool state)
     UInt32 res;
     params[0] = OSNumber::withNumber(state, 8);
     
-    if(WMIDevice->evaluateInteger("EALS", &res, params, 1) == kIOReturnSuccess)
+    if(WMIDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
         DEBUG_LOG("%s::ALS %s\n", getName(), state ? "enabled" : "disabled");
     else
         DEBUG_LOG("%s::Failed to call ALSC\n", getName());
