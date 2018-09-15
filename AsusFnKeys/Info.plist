@@ -47,8 +47,6 @@
 			<string>IOACPIPlatformDevice</string>
 			<key>Preferences</key>
 			<dict>
-				<key>ALSatBoot</key>
-				<false/>
 				<key>HasMediaButtons</key>
 				<false/>
 				<key>IdleKBacklightAutoOff</key>

@@ -361,7 +361,6 @@ bool AsusFnKeys::init(OSDictionary *dict)
     panelBrightnessLevel = 16; // Mac starts with level 16
     
     touchpadEnabled = true; // touch enabled by default on startup
-    alsMode = false;
     isALSenabled  = false;
     isPanelBackLightOn = true;
     hasKeybrdBLight = false;
@@ -590,8 +589,6 @@ void AsusFnKeys::parseConfig()
         DEBUG_LOG("%s::Keyboard backlight is not supported\n", getName());
     }
     
-    
-    
     // Detect ALS sensor
     if (WMIDevice->validateObject("ALSC") == kIOReturnSuccess && WMIDevice->validateObject("ALSS") == kIOReturnSuccess)
     {
@@ -632,10 +629,7 @@ void AsusFnKeys::parseConfig()
                 
                 if (tmpBoolean)
                 {
-                    if(!strncmp(tmpStr, "ALSatBoot", strlen(tmpStr)))
-                        alsAtBoot = tmpBoolean->getValue();
-                    
-                    else if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
+                    if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
                         hasMediaButtons = tmpBoolean->getValue();
                     
                     else if(!strncmp(tmpStr, "IdleKBacklightAutoOff", strlen(tmpStr)))
@@ -732,8 +726,7 @@ void AsusFnKeys::resetTimer()
 
 void AsusFnKeys::handleMessage(int code)
 {
-    loopCount = kLoopCount = 0;
-    alsMode = false;
+    loopCount = 0;
     bool show = false;
     
     resetTimer();
@@ -801,27 +794,24 @@ void AsusFnKeys::handleMessage(int code)
             break;
             
         case 0x7A: // Fn + A, ALS Sensor
-            isALSenabled = !isALSenabled;
-            enableALS(isALSenabled);
+            if(hasALSensor)
+            {
+                isALSenabled = !isALSenabled;
+                enableALS(isALSenabled);
+            }
             break;
             
         case 0x7D: // Airplane mode
             kev.sendMessage(kevAirplaneMode, 0, 0);
             break;
             
-        case 0xC6: // ALS Notifcations
+        case 0xC6:
+        case 0xC7: // ALS Notifcations
             if(hasALSensor)
             {
-                code = processALS();
-                alsMode = true;
-            }
-            break;
-            
-        case 0xC7: // ALS Notifcations (Optional)
-            if(hasALSensor)
-            {
-                code = processALS();
-                alsMode = true;
+                UInt32 alsValue = 0;
+                WMIDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
+                DEBUG_LOG("%s::ALS %d\n", getName(), alsValue);
             }
             break;
             
@@ -878,36 +868,21 @@ void AsusFnKeys::handleMessage(int code)
             break;
     }
     
-    DEBUG_LOG("%s::Received Key %d(0x%x) ALS mode %d\n", getName(), code, code, alsMode);
+    DEBUG_LOG("%s::Received Key %d(0x%x)\n", getName(), code, code);
     
     if (hasKeybrdBLight)
         setKeyboardBackLight(keybrdBLightLvl, true, show);
     
-    // have media buttons then skip C, V and Space & ALS sensor keys events
-    if(hasMediaButtons && (code == 0x8A || code == 0x82 || code == 0x5c || code == 0xc6 || code == 0xc7 || code == 0x7d || code == 0x5e))
-        return;
-    
     // Sending the code for the keyboard handler
-    processFnKeyEvents(code, alsMode, kLoopCount, loopCount);
-    
-    // Clearing ALS mode after processing
-    if(alsMode)
-        alsMode = false;
+    processFnKeyEvents(code, loopCount);
 }
 
 //
 // Process Fn key event
 //
-void AsusFnKeys::processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount)
+void AsusFnKeys::processFnKeyEvents(int code, int bLoopCount)
 {
-    // Ambient Light Sensor Mode sends either 4 Brightness Up/Down events
-    if(alsMode)
-    {
-        for(int i =0; i < kLoopCount; i++)
-            _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), kLoopCount, code, code);
-    }
-    else if(bLoopCount>0)
+    if(bLoopCount>0)
     {
         for (int j = 0; j < bLoopCount; j++)
             _keyboardDevice->keyPressed(code);
@@ -927,17 +902,9 @@ void AsusFnKeys::enableALS(bool state)
     params[0] = OSNumber::withNumber(state, 8);
     
     if(WMIDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
-        DEBUG_LOG("%s::ALS %s\n", getName(), state ? "enabled" : "disabled");
+        DEBUG_LOG("%s::ALS %s %d\n", getName(), state ? "enabled" : "disabled", res);
     else
         DEBUG_LOG("%s::Failed to call ALSC\n", getName());
-}
-
-UInt32 AsusFnKeys::processALS()
-{
-    UInt32 alsValue = 0;
-    WMIDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
-    DEBUG_LOG("%s::ALS %d\n", getName(), alsValue);
-    return 0xC6;
 }
 
 UInt8 AsusFnKeys::getKeyboardBackLight()
@@ -1319,18 +1286,11 @@ void AsusFnKeys::enableEvent()
             
             curKeybrdBlvl = keybrdBLightLvl;
             
-            /**** ALS Sesnor at boot ***/
-            if(alsAtBoot)
+            if(hasALSensor)
             {
                 isALSenabled = true;
                 enableALS(isALSenabled);
-                
                 IOLog("%s::ALS turned on at boot\n", getName());
-            }
-            else
-            {
-                isALSenabled = false;
-                enableALS(isALSenabled);
             }
             
             IOLog("%s::Asus Fn Hotkey Events Enabled\n", getName());

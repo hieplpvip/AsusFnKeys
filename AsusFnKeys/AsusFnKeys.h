@@ -232,10 +232,9 @@ protected:
     void disableEvent();
     
     void handleMessage(int code);
-    void processFnKeyEvents(int code, bool alsMode, int kLoopCount, int bLoopCount);
+    void processFnKeyEvents(int code, int bLoopCount);
     
     void enableALS(bool state);
-    UInt32 processALS();
     
     bool keybrdBLight16;
     UInt8 keybrdBLightLvl, curKeybrdBlvl;
@@ -262,10 +261,10 @@ protected:
     static const FnKeysKeyMap keyMap[];
     
     bool   touchpadEnabled;
-    bool   alsMode, hasALSensor, isALSenabled, alsAtBoot;
+    bool   hasALSensor, isALSenabled;
     bool   isPanelBackLightOn;
     bool   hasMediaButtons, hasKeybrdBLight;
-    int    loopCount, kLoopCount;
+    int    loopCount;
     
     IOWorkLoop *_workLoop;
     IOTimerEventSource *_autoOffTimer;
