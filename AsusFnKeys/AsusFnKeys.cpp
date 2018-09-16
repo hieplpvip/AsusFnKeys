@@ -831,10 +831,10 @@ void AsusFnKeys::handleMessage(int code)
             {
                 if(keybrdBLight16)
                 {
-                    if(keybrdBLightLvl < 15)
+                    if(keybrdBLightLvl < 16)
                         keybrdBLightLvl++;
                     else
-                        keybrdBLightLvl = 15;
+                        keybrdBLightLvl = 16;
                 }
                 else
                 {
@@ -1279,6 +1279,8 @@ void AsusFnKeys::enableEvent()
             UInt8 tmp = readKBBacklightFromNVRAM();
             if(tmp != 100)
                 keybrdBLightLvl = tmp;
+            
+            if(!keybrdBLight16 && keybrdBLightLvl>3) keybrdBLightLvl=3;
             
             // Calling the keyboardBacklight Event for Setting the Backlight
             if(hasKeybrdBLight)
