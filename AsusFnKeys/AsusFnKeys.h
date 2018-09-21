@@ -36,7 +36,8 @@
 #include <sys/kern_control.h>
 #include <libkern/OSTypes.h>
 
-#include "FnKeysHIKeyboardDevice.h"
+#include "karabiner_virtual_hid_device.hpp"
+#include "VirtualHIDKeyboard.hpp"
 #include "KernEventServer.h"
 #include "KeyImplementations.hpp"
 
@@ -180,10 +181,7 @@ const UInt8 NOTIFY_BRIGHTNESS_UP_MAX = 0x1F;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MIN = 0x20;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 
-#define MS_TO_NS(ms) (1000ULL * 1000ULL * (ms))
-#define kAsusKeyboardBacklight "asus-keyboard-backlight"
-
-#define kDeliverNotifications "ASUSFN,deliverNotifications"
+#define kDeliverNotifications "RM,deliverNotifications"
 enum
 {
     kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),       // set disable/enable touchpad (data is bool*)
@@ -198,6 +196,62 @@ enum
     kevAirplaneMode = 2,
     kevSleep = 3,
     kevTouchpad = 4,
+};
+
+enum ReportType
+{
+    none = 0,
+    keyboard_input = 1,
+    consumer_input = 2,
+    apple_vendor_top_case_input = 3,
+    apple_vendor_keyboard_input = 4,
+};
+
+typedef struct  {
+    UInt16 in;
+    UInt8 out;
+    ReportType type;
+} FnKeysKeyMap;
+
+/**
+ *  ALSSensor structure contains sensor-specific information for this system
+ */
+struct ALSSensor {
+    /**
+     *  Supported sensor types
+     */
+    enum Type : uint8_t {
+        NoSensor  = 0,
+        BS520     = 1,
+        TSL2561CS = 2,
+        LX1973A   = 3,
+        ISL29003  = 4,
+        Unknown7  = 7
+    };
+    
+    /**
+     *  Sensor type
+     */
+    Type sensorType {Type::NoSensor};
+    
+    /**
+     * TRUE if no lid or if sensor works with closed lid.
+     * FALSE otherwise.
+     */
+    bool validWhenLidClosed {false};
+    
+    /**
+     *  Possibly ID
+     */
+    uint8_t unknown {0};
+    
+    /**
+     * TRUE if the SIL brightness depends on this sensor's value.
+     * FALSE otherwise.
+     */
+    bool controlSIL {false};
+    
+    ALSSensor(Type sensorType, bool validWhenLidClosed, uint8_t unknown, bool controlSIL): sensorType(sensorType), validWhenLidClosed(validWhenLidClosed), unknown(unknown), controlSIL(controlSIL) {}
 };
 
 class AsusFnKeys : public IOService
@@ -218,73 +272,12 @@ class AsusFnKeys : public IOService
     static constexpr SMC_KEY KeyMSLD = SMC_MAKE_IDENTIFIER('M','S','L','D');
     
     /**
-     *  VirtualSMC service registration notifier
-     */
-    IONotifier *vsmcNotifier {nullptr};
-    
-    /**
      *  Registered plugin instance
      */
     VirtualSMCAPI::Plugin vsmcPlugin {
         xStringify(PRODUCT_NAME),
         parseModuleVersion(xStringify(MODULE_VERSION)),
         VirtualSMCAPI::Version,
-    };
-    
-    /**
-     *  A workloop in charge of handling timer events with requests.
-     */
-    IOWorkLoop *workloop {nullptr};
-    
-    /**
-     *  Workloop timer event source for status updates
-     */
-    IOTimerEventSource *poller {nullptr};
-    
-    /**
-     *  Interrupt submission timeout
-     */
-    static constexpr uint32_t SensorUpdateTimeoutMS {1000};
-    
-    /**
-     *  ALSSensor structure contains sensor-specific information for this system
-     */
-    struct ALSSensor {
-        /**
-         *  Supported sensor types
-         */
-        enum Type : uint8_t {
-            NoSensor  = 0,
-            BS520     = 1,
-            TSL2561CS = 2,
-            LX1973A   = 3,
-            ISL29003  = 4,
-            Unknown7  = 7
-        };
-        
-        /**
-         *  Sensor type
-         */
-        Type sensorType {Type::NoSensor};
-        
-        /**
-         * TRUE if no lid or if sensor works with closed lid.
-         * FALSE otherwise.
-         */
-        bool validWhenLidClosed {false};
-        
-        /**
-         *  Possibly ID
-         */
-        uint8_t unknown {0};
-        
-        /**
-         * TRUE if the SIL brightness depends on this sensor's value.
-         * FALSE otherwise.
-         */
-        bool controlSIL {false};
-        
-        ALSSensor(Type sensorType, bool validWhenLidClosed, uint8_t unknown, bool controlSIL): sensorType(sensorType), validWhenLidClosed(validWhenLidClosed), unknown(unknown), controlSIL(controlSIL) {}
     };
     
 public:
@@ -294,7 +287,6 @@ public:
     virtual bool       init(OSDictionary *dictionary = 0);
     virtual bool       start(IOService *provider);
     virtual void       stop(IOService *provider);
-    virtual void       free(void);
     virtual IOService *probe(IOService *provider, SInt32 *score);
     
     //power management events
@@ -327,10 +319,10 @@ protected:
     /**
      *  Virtual keyboard device
      */
-    FnKeysHIKeyboardDevice * _keyboardDevice;
+    VirtualHIDKeyboard *_virtualKBrd;
     
     /**
-     *  Send notifications to user-space daemon
+     *  Used notifications to user-space daemon
      */
     KernEventServer kev;
     
@@ -344,6 +336,26 @@ protected:
      */
     ALSForceBits forceBits;
     
+    /**
+     *  VirtualSMC service registration notifier
+     */
+    IONotifier *vsmcNotifier {nullptr};
+    
+    /**
+     *  A workloop in charge of handling timer events with requests.
+     */
+    IOWorkLoop *workloop {nullptr};
+    
+    /**
+     *  Workloop timer event source for status updates
+     */
+    IOTimerEventSource *poller {nullptr};
+    
+    /**
+     *  Interrupt submission timeout
+     */
+    static constexpr uint32_t SensorUpdateTimeoutMS {1000};
+    
     OSDictionary * properties;
     
     OSDictionary* getDictByUUID(const char * guid);
@@ -354,6 +366,8 @@ protected:
     void disableEvent();
     
     void handleMessage(int code);
+    IOReturn postKeyboardInputReport(const void* report, uint32_t reportSize);
+    IOReturn resetVirtualHIDKeyboard(void);
     void processFnKeyEvents(int code, int bLoopCount);
     
     void enableALS(bool state);
@@ -361,7 +375,7 @@ protected:
     /**
      *  Brightness
      */
-    UInt32 panelBrightnessLevel;
+    UInt32 panelBrightnessLevel {16};
     char backlightEntry[1000];
     int checkBacklightEntry();
     int findBacklightEntry();
@@ -378,20 +392,16 @@ protected:
     
     static const FnKeysKeyMap keyMap[];
     
-    bool   touchpadEnabled;
-    bool   hasALSensor, isALSenabled;
-    bool   isPanelBackLightOn;
-    bool   hasKeybrdBLight;
-    int    loopCount;
+    bool   touchpadEnabled {true};
+    bool   hasALSensor {false}, isALSenabled {false};
+    bool   isPanelBackLightOn {true};
+    bool   hasKeybrdBLight {false};
     
     IOCommandGate* command_gate;
     
     IONotifier* _publishNotify;
     IONotifier* _terminateNotify;
     OSSet* _notificationServices;
-    
-    // Virtual SMC plugin part
-    
     
 private:
     int parse_wdg(OSDictionary *dict);
@@ -401,12 +411,10 @@ private:
     
     //utilities
     int wmi_data2Str(const char *in, char *out);
-#ifdef DEBUG
     bool wmi_parse_guid(const UInt8 *src, UInt8 *dest);
     void wmi_dump_wdg(struct guid_block *g);
     int wmi_parse_hexbyte(const UInt8 *src);
     void wmi_swap_bytes(UInt8 *src, UInt8 *dest);
-#endif
     
 };
 

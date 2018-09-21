@@ -35,7 +35,6 @@
 bool ADDPR(debugEnabled) = true;
 uint32_t ADDPR(debugPrintDelay) = 0;
 
-#ifdef DEBUG
 /*
  * GUID parsing functions
  */
@@ -158,7 +157,6 @@ void AsusFnKeys::wmi_dump_wdg(struct guid_block *g)
             DEBUG_LOG("ACPI_WMI_EVENT ");
     }
 }
-#endif
 
 /**
  * wmi_data2Str - converts binary guid to ascii guid
@@ -340,32 +338,27 @@ int AsusFnKeys::parse_wdg(OSDictionary *dict)
 OSDefineMetaClassAndStructors(AsusFnKeys, IOService)
 
 const FnKeysKeyMap AsusFnKeys::keyMap[] = {
-    {0x30, NX_KEYTYPE_SOUND_UP, "NX_KEYTYPE_SOUND_UP"},
-    {0x31, NX_KEYTYPE_SOUND_DOWN, "NX_KEYTYPE_SOUND_DOWN"},
-    {0x32, NX_KEYTYPE_MUTE, "NX_KEYTYPE_MUTE"},
-    {0x61, NX_KEYTYPE_VIDMIRROR, "NX_KEYTYPE_VIDMIRROR"},
-    {0x10, NX_KEYTYPE_BRIGHTNESS_UP, "NX_KEYTYPE_BRIGHTNESS_UP"},
-    {0x20, NX_KEYTYPE_BRIGHTNESS_DOWN, "NX_KEYTYPE_BRIGHTNESS_DOWN"},
+    {0x30, kHIDUsage_Csmr_VolumeIncrement, ReportType::keyboard_input},
+    {0x31, kHIDUsage_Csmr_VolumeDecrement, ReportType::keyboard_input},
+    {0x32, kHIDUsage_Csmr_Mute, ReportType::keyboard_input},
+    {0x61, kHIDUsage_AV_TopCase_VideoMirror, ReportType::apple_vendor_top_case_input},
+    {0x10, kHIDUsage_AV_TopCase_BrightnessUp, ReportType::apple_vendor_top_case_input},
+    {0x20, kHIDUsage_AV_TopCase_BrightnessDown, ReportType::apple_vendor_top_case_input},
+    {0xC5, kHIDUsage_AV_TopCase_IlluminationDown, ReportType::apple_vendor_top_case_input},
+    {0xC4, kHIDUsage_AV_TopCase_IlluminationUp, ReportType::apple_vendor_top_case_input},
     // Media buttons bound to Asus events keys Down, Left and Right Arrows in full keyboard
-    {0x40, NX_KEYTYPE_PREVIOUS, "NX_KEYTYPE_PREVIOUS"},
-    {0x41, NX_KEYTYPE_NEXT, "NX_KEYTYPE_NEXT"},
-    {0x45, NX_KEYTYPE_PLAY, "NX_KEYTYPE_PLAY"},
+    {0x40, kHIDUsage_Csmr_ScanPreviousTrack, ReportType::keyboard_input},
+    {0x41, kHIDUsage_Csmr_ScanNextTrack, ReportType::keyboard_input},
+    {0x45, kHIDUsage_Csmr_PlayOrPause, ReportType::keyboard_input},
     // Media button bound to Asus events keys C, V and Space keys in compact keyboard
-    {0x8A, NX_KEYTYPE_PREVIOUS, "NX_KEYTYPE_PREVIOUS"},
-    {0x82, NX_KEYTYPE_NEXT, "NX_KEYTYPE_NEXT"},
-    {0x5C, NX_KEYTYPE_PLAY, "NX_KEYTYPE_PLAY"},
-    {0,0xFF,NULL}
+    {0x8A, kHIDUsage_Csmr_ScanPreviousTrack, ReportType::keyboard_input},
+    {0x82, kHIDUsage_Csmr_ScanNextTrack, ReportType::keyboard_input},
+    {0x5C, kHIDUsage_Csmr_PlayOrPause, ReportType::keyboard_input},
+    {0,0xFF,ReportType::none}
 };
 
 bool AsusFnKeys::init(OSDictionary *dict)
 {
-    panelBrightnessLevel = 16; // Mac starts with level 16
-    
-    touchpadEnabled = true; // touch enabled by default on startup
-    isALSenabled  = false;
-    isPanelBackLightOn = true;
-    hasKeybrdBLight = false;
-    
     _notificationServices = OSSet::withCapacity(1);
     
     kev.setVendorID("com.hieplpvip");
@@ -375,12 +368,6 @@ bool AsusFnKeys::init(OSDictionary *dict)
     properties = dict;
     DEBUG_LOG("%s::Init\n", getName());
     return result;
-}
-
-void AsusFnKeys::free(void)
-{
-    DEBUG_LOG("%s::Free\n", getName());
-    super::free();
 }
 
 IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
@@ -427,8 +414,6 @@ bool AsusFnKeys::start(IOService *provider)
     atkDevice = (IOACPIPlatformDevice *) provider;
     
     IOLog("%s::Found WMI Device %s\n", getName(), atkDevice->getName());
-    
-    _keyboardDevice = NULL;
     
     parse_wdg(properties);
     
@@ -581,19 +566,25 @@ void AsusFnKeys::stop(IOService *provider)
 {
     DEBUG_LOG("%s::Stop\n", getName());
     
-    workloop->removeEventSource(command_gate);
-    OSSafeReleaseNULL(command_gate);
+    if (poller)
+        poller->cancelTimeout();
+    if (workloop && poller)
+        workloop->removeEventSource(poller);
+    if (workloop && command_gate)
+        workloop->removeEventSource(command_gate);
     OSSafeReleaseNULL(workloop);
-    
-    disableEvent();
-    PMstop();
+    OSSafeReleaseNULL(poller);
+    OSSafeReleaseNULL(command_gate);
     
     _publishNotify->remove();
     _terminateNotify->remove();
+    _notificationServices->flushCollection();
     OSSafeReleaseNULL(_publishNotify);
     OSSafeReleaseNULL(_terminateNotify);
-    _notificationServices->flushCollection();
     OSSafeReleaseNULL(_notificationServices);
+    
+    disableEvent();
+    PMstop();
     
     super::stop(provider);
     return;
@@ -612,7 +603,6 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
     {
         DEBUG_LOG("%s::Woke up from sleep\n", getName());
         IOSleep(1000);
-        _keyboardDevice->keyPressed(0);
     }
     
     return IOPMAckImplied;
@@ -698,8 +688,7 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 
 void AsusFnKeys::handleMessage(int code)
 {
-    loopCount = 0;
-    bool show = false;
+    int loopCount = 0;
     
     // Processing the code
     switch (code) {
@@ -775,31 +764,22 @@ void AsusFnKeys::handleMessage(int code)
             break;
             
         case 0xC5: // Fn + F3, Decrease Keyboard Backlight
-            if(hasKeybrdBLight)
-            {
-                show = true;
-            }
-            break;
-            
         case 0xC4: // Fn + F4, Increase Keyboard Backlight
-            if(hasKeybrdBLight)
-            {
-                show = true;
-            }
+            if(!hasKeybrdBLight) code = 0;
             break;
             
         default:
-            // Fn + F5, Panel Brightness Down
             if(code >= NOTIFY_BRIGHTNESS_DOWN_MIN && code<= NOTIFY_BRIGHTNESS_DOWN_MAX)
             {
+                // Fn + F5, Panel Brightness Down
                 code = NOTIFY_BRIGHTNESS_DOWN_MIN;
                 
                 if(panelBrightnessLevel > 0)
                     panelBrightnessLevel--;
             }
-            // Fn + F6, Panel Brightness Up
             else if(code >= NOTIFY_BRIGHTNESS_UP_MIN && code<= NOTIFY_BRIGHTNESS_UP_MAX)
             {
+                // Fn + F6, Panel Brightness Up
                 code = NOTIFY_BRIGHTNESS_UP_MIN;
                 
                 panelBrightnessLevel++;
@@ -815,18 +795,122 @@ void AsusFnKeys::handleMessage(int code)
     processFnKeyEvents(code, loopCount);
 }
 
+IOReturn AsusFnKeys::postKeyboardInputReport(const void* report, uint32_t reportSize)
+{
+    IOReturn result = kIOReturnError;
+    
+    if (!report || reportSize == 0) {
+        return kIOReturnBadArgument;
+    }
+    
+    if (_virtualKBrd) {
+        if (auto buffer = IOBufferMemoryDescriptor::withBytes(report, reportSize, kIODirectionNone)) {
+            result = _virtualKBrd->handleReport(buffer, kIOHIDReportTypeInput, kIOHIDOptionsTypeNone);
+            buffer->release();
+        }
+    }
+    
+    return result;
+}
+
+IOReturn AsusFnKeys::resetVirtualHIDKeyboard() {
+    bool result = kIOReturnSuccess;
+    
+    if (_virtualKBrd) {
+        {
+            karabiner_virtual_hid_device::hid_report::keyboard_input report;
+            auto kr = postKeyboardInputReport(&report, sizeof(report));
+            if (kr != kIOReturnSuccess) {
+                result = kIOReturnError;
+            }
+        }
+        {
+            karabiner_virtual_hid_device::hid_report::consumer_input report;
+            auto kr = postKeyboardInputReport(&report, sizeof(report));
+            if (kr != kIOReturnSuccess) {
+                result = kIOReturnError;
+            }
+        }
+        {
+            karabiner_virtual_hid_device::hid_report::apple_vendor_top_case_input report;
+            auto kr = postKeyboardInputReport(&report, sizeof(report));
+            if (kr != kIOReturnSuccess) {
+                result = kIOReturnError;
+            }
+        }
+        {
+            karabiner_virtual_hid_device::hid_report::apple_vendor_keyboard_input report;
+            auto kr = postKeyboardInputReport(&report, sizeof(report));
+            if (kr != kIOReturnSuccess) {
+                result = kIOReturnError;
+            }
+        }
+    }
+    
+    return result;
+}
+
 void AsusFnKeys::processFnKeyEvents(int code, int bLoopCount)
 {
-    if(bLoopCount>0)
+    int i = 0, out;
+    ReportType type;
+    do
     {
-        for (int j = 0; j < bLoopCount; j++)
-            _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
+        if (keyMap[i].type == ReportType::none && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
+        {
+            DEBUG_LOG("%s::Unknown key %02X i=%d\n", getName(), code, i);
+            return;
+        }
+        if (keyMap[i].in == code)
+        {
+            DEBUG_LOG("%s::Key Pressed %02X i=%d\n", getName(), code, i);
+            out = keyMap[i].out;
+            type = keyMap[i].type;
+            break;
+        }
+        i++;
+    } while (true);
+    
+    if(type == ReportType::keyboard_input)
+    {
+        karabiner_virtual_hid_device::hid_report::keyboard_input report;
+        report.keys.insert(out);
+        if(bLoopCount>0)
+        {
+            while(bLoopCount--)
+            {
+                postKeyboardInputReport(&report, sizeof(report));
+                resetVirtualHIDKeyboard();
+            }
+            DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
+        }
+        else
+        {
+            postKeyboardInputReport(&report, sizeof(report));
+            resetVirtualHIDKeyboard();
+            DEBUG_LOG("%s::Dispatch Key %d(0x%x)\n", getName(), code, code);
+        }
     }
-    else
+    
+    else if(type == ReportType::apple_vendor_top_case_input)
     {
-        _keyboardDevice->keyPressed(code);
-        DEBUG_LOG("%s::Dispatch Key %d(0x%x)\n", getName(), code, code);
+        karabiner_virtual_hid_device::hid_report::apple_vendor_top_case_input report;
+        report.keys.insert(out);
+        if(bLoopCount>0)
+        {
+            while(bLoopCount--)
+            {
+                postKeyboardInputReport(&report, sizeof(report));
+                resetVirtualHIDKeyboard();
+            }
+            DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
+        }
+        else
+        {
+            postKeyboardInputReport(&report, sizeof(report));
+            resetVirtualHIDKeyboard();
+            DEBUG_LOG("%s::Dispatch Key %d(0x%x)\n", getName(), code, code);
+        }
     }
 }
 
@@ -1081,19 +1165,19 @@ void AsusFnKeys::enableEvent()
         IOLog("Unable to enable events!!!\n");
     else
     {
-        _keyboardDevice = new FnKeysHIKeyboardDevice;
+        _virtualKBrd = new VirtualHIDKeyboard;
         
-        if (!_keyboardDevice             ||
-            !_keyboardDevice->init()     ||
-            !_keyboardDevice->attach(this))
+        if(!_virtualKBrd               ||
+           !_virtualKBrd->init()       ||
+           !_virtualKBrd->attach(this) ||
+           !_virtualKBrd->start(this)  )
         {
-            _keyboardDevice->release();
-            IOLog("%s::Error creating keyboardDevice\n", getName());
+            _virtualKBrd->release();
+            IOLog("%s::Error VirtualHIDKeyboard\n", getName());
         }
         else
         {
-            _keyboardDevice->setKeyMap(keyMap);
-            _keyboardDevice->registerService();
+            _virtualKBrd->setCountryCode(0);
             
             // Setting Touchpad state on startup
             setProperty("TouchpadEnabled", true);
@@ -1112,7 +1196,7 @@ void AsusFnKeys::enableEvent()
 
 void AsusFnKeys::disableEvent()
 {
-    OSSafeReleaseNULL(_keyboardDevice);
+    OSSafeReleaseNULL(_virtualKBrd);
 }
 
 #pragma mark -

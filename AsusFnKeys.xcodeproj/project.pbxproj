@@ -7,14 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		270DCF8D175CA27600004E6A /* FnKeysHIKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */; };
-		270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */; };
-		270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */; };
-		270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */; };
 		27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 27F96E0116333B72003A6255 /* AsusFnKeys.cpp */; };
 		4C0FAD28212B29680016CFFB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0FAD27212B29680016CFFB /* main.m */; };
 		4C115058212BBE7E00888D25 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C115057212BBE7E00888D25 /* CoreWLAN.framework */; };
 		4C11505A212BCA6300888D25 /* IOBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C115059212BCA6300888D25 /* IOBluetooth.framework */; };
+		4C1E3B7F21553EE000FBE803 /* VirtualHIDKeyboard.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E3B7D21553EE000FBE803 /* VirtualHIDKeyboard.hpp */; };
+		4C1E3B8021553EE000FBE803 /* VirtualHIDKeyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E3B7E21553EE000FBE803 /* VirtualHIDKeyboard.cpp */; };
+		4C1E3B822155430B00FBE803 /* karabiner_virtual_hid_device.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E3B812155430B00FBE803 /* karabiner_virtual_hid_device.hpp */; };
 		4C1FD87A212B275600FB5745 /* KernEventServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1FD878212B275600FB5745 /* KernEventServer.cpp */; };
 		4C1FD87B212B275600FB5745 /* KernEventServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1FD879212B275600FB5745 /* KernEventServer.h */; };
 		4C7FF137215404AD000B5DB0 /* KeyImplementations.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C7FF135215404AD000B5DB0 /* KeyImplementations.cpp */; };
@@ -44,10 +43,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboard.cpp; sourceTree = "<group>"; };
-		270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboard.h; sourceTree = "<group>"; };
-		270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FnKeysHIKeyboardDevice.cpp; sourceTree = "<group>"; };
-		270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnKeysHIKeyboardDevice.h; sourceTree = "<group>"; };
 		27F96DF516333B72003A6255 /* AsusFnKeys.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsusFnKeys.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		27F96DFC16333B72003A6255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = AsusFnKeys/Info.plist; sourceTree = "<group>"; };
 		27F96E0016333B72003A6255 /* AsusFnKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsusFnKeys.h; sourceTree = "<group>"; };
@@ -58,6 +53,9 @@
 		4C0FAD2D212B2A0B0016CFFB /* BezelServices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BezelServices.h; sourceTree = "<group>"; };
 		4C115057212BBE7E00888D25 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		4C115059212BCA6300888D25 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
+		4C1E3B7D21553EE000FBE803 /* VirtualHIDKeyboard.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = VirtualHIDKeyboard.hpp; sourceTree = "<group>"; };
+		4C1E3B7E21553EE000FBE803 /* VirtualHIDKeyboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VirtualHIDKeyboard.cpp; sourceTree = "<group>"; };
+		4C1E3B812155430B00FBE803 /* karabiner_virtual_hid_device.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = karabiner_virtual_hid_device.hpp; sourceTree = "<group>"; };
 		4C1FD878212B275600FB5745 /* KernEventServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KernEventServer.cpp; sourceTree = "<group>"; };
 		4C1FD879212B275600FB5745 /* KernEventServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KernEventServer.h; sourceTree = "<group>"; };
 		4C21E329212B34F400260AEA /* com.hieplpvip.AsusFnKeysDaemon.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.hieplpvip.AsusFnKeysDaemon.plist; sourceTree = "<group>"; };
@@ -138,7 +136,7 @@
 			isa = PBXGroup;
 			children = (
 				4C1FD877212B273700FB5745 /* KernEventServer */,
-				4C34A4B8210102B700028542 /* FnkeysHIKeyboard */,
+				4C1E3B7821553E8800FBE803 /* VirtualHIDKeyboard */,
 				27F96DFA16333B72003A6255 /* AsusFnKeys */,
 				4C0FAD26212B29680016CFFB /* AsusFnKeysDaemon */,
 				4C2983892154026800A0C847 /* SDK */,
@@ -188,6 +186,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		4C1E3B7821553E8800FBE803 /* VirtualHIDKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				4C1E3B812155430B00FBE803 /* karabiner_virtual_hid_device.hpp */,
+				4C1E3B7E21553EE000FBE803 /* VirtualHIDKeyboard.cpp */,
+				4C1E3B7D21553EE000FBE803 /* VirtualHIDKeyboard.hpp */,
+			);
+			path = VirtualHIDKeyboard;
+			sourceTree = "<group>";
+		};
 		4C1FD877212B273700FB5745 /* KernEventServer */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,17 +213,6 @@
 				4C7FF12621540317000B5DB0 /* VirtualSMCSDK */,
 			);
 			name = SDK;
-			sourceTree = "<group>";
-		};
-		4C34A4B8210102B700028542 /* FnkeysHIKeyboard */ = {
-			isa = PBXGroup;
-			children = (
-				270DCF89175CA27600004E6A /* FnKeysHIKeyboard.cpp */,
-				270DCF8A175CA27600004E6A /* FnKeysHIKeyboard.h */,
-				270DCF8B175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp */,
-				270DCF8C175CA27600004E6A /* FnKeysHIKeyboardDevice.h */,
-			);
-			path = FnkeysHIKeyboard;
 			sourceTree = "<group>";
 		};
 		4C7FF12621540317000B5DB0 /* VirtualSMCSDK */ = {
@@ -329,9 +326,9 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */,
-				270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */,
+				4C1E3B7F21553EE000FBE803 /* VirtualHIDKeyboard.hpp in Headers */,
 				4C7FF138215404AD000B5DB0 /* KeyImplementations.hpp in Headers */,
+				4C1E3B822155430B00FBE803 /* karabiner_virtual_hid_device.hpp in Headers */,
 				4C1FD87B212B275600FB5745 /* KernEventServer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -430,9 +427,8 @@
 			files = (
 				27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */,
 				4C1FD87A212B275600FB5745 /* KernEventServer.cpp in Sources */,
-				270DCF8D175CA27600004E6A /* FnKeysHIKeyboard.cpp in Sources */,
 				4C7FF137215404AD000B5DB0 /* KeyImplementations.cpp in Sources */,
-				270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */,
+				4C1E3B8021553EE000FBE803 /* VirtualHIDKeyboard.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
