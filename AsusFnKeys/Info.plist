@@ -45,17 +45,6 @@
 			<integer>9999</integer>
 			<key>IOProviderClass</key>
 			<string>IOACPIPlatformDevice</string>
-			<key>Preferences</key>
-			<dict>
-				<key>HasMediaButtons</key>
-				<false/>
-				<key>KeyboardBLightLevelAtBoot</key>
-				<integer>1</integer>
-			</dict>
-			<key>RM,deliverNotifications</key>
-			<true/>
-			<key>VOODOOI2C,deliverNotifications</key>
-			<true/>
 		</dict>
 		<key>FnKeysHIKeyboard</key>
 		<dict>

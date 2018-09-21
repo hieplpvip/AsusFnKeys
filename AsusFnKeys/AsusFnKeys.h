@@ -349,7 +349,7 @@ protected:
     OSDictionary* getDictByUUID(const char * guid);
     IOReturn enableFnKeyEvents(const char * guid, UInt32 methodID);
     
-    void parseConfig();
+    void checkKBALS();
     void enableEvent();
     void disableEvent();
     
@@ -357,16 +357,6 @@ protected:
     void processFnKeyEvents(int code, int bLoopCount);
     
     void enableALS(bool state);
-    
-    /**
-     *  Keyboard backlight
-     */
-    bool keybrdBLight16;
-    UInt8 keybrdBLightLvl, curKeybrdBlvl;
-    void saveKBBacklightToNVRAM(UInt8 level);
-    UInt8 readKBBacklightFromNVRAM();
-    UInt8 getKeyboardBackLight();
-    void setKeyboardBackLight(UInt8 level, bool nvram = true, bool display = false);
     
     /**
      *  Brightness
@@ -391,10 +381,9 @@ protected:
     bool   touchpadEnabled;
     bool   hasALSensor, isALSenabled;
     bool   isPanelBackLightOn;
-    bool   hasMediaButtons, hasKeybrdBLight;
+    bool   hasKeybrdBLight;
     int    loopCount;
     
-    IOTimerEventSource *_autoOffTimer;
     IOCommandGate* command_gate;
     
     IONotifier* _publishNotify;

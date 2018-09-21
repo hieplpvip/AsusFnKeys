@@ -34,12 +34,12 @@ SMC_RESULT SMCKBrdBLightValue::writeAccess() {
     {
         uint16_t val = value->val1<<4 | value->val2>>4;
         SYSLOG("alsd", "LKSB writeAccess %d", val);
-        val = val / 256;
+        val = val / 16;
         OSObject * params[1];
         OSObject * ret = NULL;
         params[0] = OSNumber::withNumber(val, sizeof(val)*8);
         
-        atkDevice->evaluateObject("SKBL", &ret, params, 1);
+        atkDevice->evaluateObject("SKBV", &ret, params, 1);
     }
     return SmcSuccess;
 }
