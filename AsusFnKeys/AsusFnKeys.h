@@ -281,16 +281,16 @@ class AsusFnKeys : public IOService
     };
     
 public:
-    virtual IOReturn message(UInt32 type, IOService * provider, void * argument);
+    virtual IOReturn message(UInt32 type, IOService * provider, void * argument) override;
     
     // standard IOKit methods
-    virtual bool       init(OSDictionary *dictionary = 0);
-    virtual bool       start(IOService *provider);
-    virtual void       stop(IOService *provider);
-    virtual IOService *probe(IOService *provider, SInt32 *score);
+    virtual bool init(OSDictionary *dictionary = 0) override;
+    virtual bool start(IOService *provider) override;
+    virtual void stop(IOService *provider) override;
+    virtual IOService *probe(IOService *provider, SInt32 *score) override;
     
     //power management events
-    virtual IOReturn    setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker);
+    virtual IOReturn setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker) override;
     
     /**
      *  Submit the keys to received VirtualSMC service.
@@ -408,8 +408,6 @@ private:
     OSString *flagsToStr(UInt8 flags);
     void wmi_wdg2reg(struct guid_block *g, OSArray *array, OSArray *dataArray);
     OSDictionary * readDataBlock(char *str);
-    
-    //utilities
     int wmi_data2Str(const char *in, char *out);
     bool wmi_parse_guid(const UInt8 *src, UInt8 *dest);
     void wmi_dump_wdg(struct guid_block *g);
