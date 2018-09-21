@@ -17,6 +17,9 @@
 		4C11505A212BCA6300888D25 /* IOBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C115059212BCA6300888D25 /* IOBluetooth.framework */; };
 		4C1FD87A212B275600FB5745 /* KernEventServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1FD878212B275600FB5745 /* KernEventServer.cpp */; };
 		4C1FD87B212B275600FB5745 /* KernEventServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1FD879212B275600FB5745 /* KernEventServer.h */; };
+		4C7FF137215404AD000B5DB0 /* KeyImplementations.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C7FF135215404AD000B5DB0 /* KeyImplementations.cpp */; };
+		4C7FF138215404AD000B5DB0 /* KeyImplementations.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4C7FF136215404AD000B5DB0 /* KeyImplementations.hpp */; };
+		4C7FF168215405CA000B5DB0 /* libkmod.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C7FF15C215405AB000B5DB0 /* libkmod.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -58,6 +61,56 @@
 		4C1FD878212B275600FB5745 /* KernEventServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KernEventServer.cpp; sourceTree = "<group>"; };
 		4C1FD879212B275600FB5745 /* KernEventServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KernEventServer.h; sourceTree = "<group>"; };
 		4C21E329212B34F400260AEA /* com.hieplpvip.AsusFnKeysDaemon.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.hieplpvip.AsusFnKeysDaemon.plist; sourceTree = "<group>"; };
+		4C7FF12721540317000B5DB0 /* kern_smcinfo.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_smcinfo.hpp; sourceTree = "<group>"; };
+		4C7FF12821540317000B5DB0 /* kern_vsmcapi.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_vsmcapi.hpp; sourceTree = "<group>"; };
+		4C7FF12921540317000B5DB0 /* AppleSmc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppleSmc.h; sourceTree = "<group>"; };
+		4C7FF12A21540317000B5DB0 /* kern_keyvalue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_keyvalue.hpp; sourceTree = "<group>"; };
+		4C7FF12B21540317000B5DB0 /* kern_value.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_value.hpp; sourceTree = "<group>"; };
+		4C7FF12C21540317000B5DB0 /* vsmcatomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vsmcatomic.h; sourceTree = "<group>"; };
+		4C7FF12D21540317000B5DB0 /* AppleSmcBridge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AppleSmcBridge.hpp; sourceTree = "<group>"; };
+		4C7FF135215404AD000B5DB0 /* KeyImplementations.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyImplementations.cpp; sourceTree = "<group>"; };
+		4C7FF136215404AD000B5DB0 /* KeyImplementations.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = KeyImplementations.hpp; sourceTree = "<group>"; };
+		4C7FF13A215405AB000B5DB0 /* kern_config.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_config.hpp; sourceTree = "<group>"; };
+		4C7FF13B215405AB000B5DB0 /* kern_time.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_time.hpp; sourceTree = "<group>"; };
+		4C7FF13C215405AB000B5DB0 /* kern_nvram.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_nvram.hpp; sourceTree = "<group>"; };
+		4C7FF13D215405AB000B5DB0 /* kern_cpu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_cpu.hpp; sourceTree = "<group>"; };
+		4C7FF13E215405AB000B5DB0 /* kern_devinfo.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_devinfo.hpp; sourceTree = "<group>"; };
+		4C7FF13F215405AB000B5DB0 /* kern_efi.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_efi.hpp; sourceTree = "<group>"; };
+		4C7FF140215405AB000B5DB0 /* kern_policy.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_policy.hpp; sourceTree = "<group>"; };
+		4C7FF141215405AB000B5DB0 /* kern_user.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_user.hpp; sourceTree = "<group>"; };
+		4C7FF142215405AB000B5DB0 /* plugin_start.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = plugin_start.hpp; sourceTree = "<group>"; };
+		4C7FF143215405AB000B5DB0 /* kern_iokit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_iokit.hpp; sourceTree = "<group>"; };
+		4C7FF144215405AB000B5DB0 /* kern_crypto.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_crypto.hpp; sourceTree = "<group>"; };
+		4C7FF145215405AB000B5DB0 /* kern_mach.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_mach.hpp; sourceTree = "<group>"; };
+		4C7FF146215405AB000B5DB0 /* kern_compression.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_compression.hpp; sourceTree = "<group>"; };
+		4C7FF147215405AB000B5DB0 /* kern_file.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_file.hpp; sourceTree = "<group>"; };
+		4C7FF148215405AB000B5DB0 /* kern_rtc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_rtc.hpp; sourceTree = "<group>"; };
+		4C7FF149215405AB000B5DB0 /* kern_disasm.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_disasm.hpp; sourceTree = "<group>"; };
+		4C7FF14B215405AB000B5DB0 /* capstone.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = capstone.h; sourceTree = "<group>"; };
+		4C7FF14C215405AB000B5DB0 /* mips.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mips.h; sourceTree = "<group>"; };
+		4C7FF14D215405AB000B5DB0 /* sparc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sparc.h; sourceTree = "<group>"; };
+		4C7FF14E215405AB000B5DB0 /* systemz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = systemz.h; sourceTree = "<group>"; };
+		4C7FF14F215405AB000B5DB0 /* arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = arm.h; sourceTree = "<group>"; };
+		4C7FF150215405AB000B5DB0 /* x86.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = x86.h; sourceTree = "<group>"; };
+		4C7FF151215405AB000B5DB0 /* ppc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ppc.h; sourceTree = "<group>"; };
+		4C7FF152215405AB000B5DB0 /* arm64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = arm64.h; sourceTree = "<group>"; };
+		4C7FF153215405AB000B5DB0 /* xcore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = xcore.h; sourceTree = "<group>"; };
+		4C7FF154215405AB000B5DB0 /* platform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = platform.h; sourceTree = "<group>"; };
+		4C7FF155215405AB000B5DB0 /* kern_patcher.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_patcher.hpp; sourceTree = "<group>"; };
+		4C7FF157215405AB000B5DB0 /* LiluVariables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LiluVariables.h; sourceTree = "<group>"; };
+		4C7FF158215405AB000B5DB0 /* kern_compat.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_compat.hpp; sourceTree = "<group>"; };
+		4C7FF159215405AB000B5DB0 /* kern_api.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_api.hpp; sourceTree = "<group>"; };
+		4C7FF15A215405AB000B5DB0 /* kern_util.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kern_util.hpp; sourceTree = "<group>"; };
+		4C7FF15C215405AB000B5DB0 /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libkmod.a; sourceTree = "<group>"; };
+		4C7FF15E215405AB000B5DB0 /* entry64.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry64.S; sourceTree = "<group>"; };
+		4C7FF15F215405AB000B5DB0 /* build.tool */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build.tool; sourceTree = "<group>"; };
+		4C7FF160215405AB000B5DB0 /* entry32.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry32.S; sourceTree = "<group>"; };
+		4C7FF161215405AB000B5DB0 /* wrappers.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = wrappers.inc; sourceTree = "<group>"; };
+		4C7FF163215405AB000B5DB0 /* mac_framework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mac_framework.h; sourceTree = "<group>"; };
+		4C7FF164215405AB000B5DB0 /* mac_policy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mac_policy.h; sourceTree = "<group>"; };
+		4C7FF165215405AB000B5DB0 /* _label.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = _label.h; sourceTree = "<group>"; };
+		4C7FF166215405AB000B5DB0 /* plugin_start.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = plugin_start.cpp; sourceTree = "<group>"; };
+		4C7FF167215405AB000B5DB0 /* LegacyIOService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegacyIOService.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +118,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C7FF168215405CA000B5DB0 /* libkmod.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,6 +141,7 @@
 				4C34A4B8210102B700028542 /* FnkeysHIKeyboard */,
 				27F96DFA16333B72003A6255 /* AsusFnKeys */,
 				4C0FAD26212B29680016CFFB /* AsusFnKeysDaemon */,
+				4C2983892154026800A0C847 /* SDK */,
 				27F96DF616333B72003A6255 /* Products */,
 				27F96DFC16333B72003A6255 /* Info.plist */,
 				4C115056212BBE7E00888D25 /* Frameworks */,
@@ -107,6 +162,8 @@
 			children = (
 				27F96E0016333B72003A6255 /* AsusFnKeys.h */,
 				27F96E0116333B72003A6255 /* AsusFnKeys.cpp */,
+				4C7FF135215404AD000B5DB0 /* KeyImplementations.cpp */,
+				4C7FF136215404AD000B5DB0 /* KeyImplementations.hpp */,
 			);
 			path = AsusFnKeys;
 			sourceTree = "<group>";
@@ -140,6 +197,16 @@
 			path = KernEventServer;
 			sourceTree = "<group>";
 		};
+		4C2983892154026800A0C847 /* SDK */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF139215405AB000B5DB0 /* Headers */,
+				4C7FF15B215405AB000B5DB0 /* Library */,
+				4C7FF12621540317000B5DB0 /* VirtualSMCSDK */,
+			);
+			name = SDK;
+			sourceTree = "<group>";
+		};
 		4C34A4B8210102B700028542 /* FnkeysHIKeyboard */ = {
 			isa = PBXGroup;
 			children = (
@@ -151,6 +218,110 @@
 			path = FnkeysHIKeyboard;
 			sourceTree = "<group>";
 		};
+		4C7FF12621540317000B5DB0 /* VirtualSMCSDK */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF12721540317000B5DB0 /* kern_smcinfo.hpp */,
+				4C7FF12821540317000B5DB0 /* kern_vsmcapi.hpp */,
+				4C7FF12921540317000B5DB0 /* AppleSmc.h */,
+				4C7FF12A21540317000B5DB0 /* kern_keyvalue.hpp */,
+				4C7FF12B21540317000B5DB0 /* kern_value.hpp */,
+				4C7FF12C21540317000B5DB0 /* vsmcatomic.h */,
+				4C7FF12D21540317000B5DB0 /* AppleSmcBridge.hpp */,
+			);
+			name = VirtualSMCSDK;
+			path = VirtualSMC.kext/Contents/Resources/VirtualSMCSDK;
+			sourceTree = "<group>";
+		};
+		4C7FF139215405AB000B5DB0 /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF13A215405AB000B5DB0 /* kern_config.hpp */,
+				4C7FF13B215405AB000B5DB0 /* kern_time.hpp */,
+				4C7FF13C215405AB000B5DB0 /* kern_nvram.hpp */,
+				4C7FF13D215405AB000B5DB0 /* kern_cpu.hpp */,
+				4C7FF13E215405AB000B5DB0 /* kern_devinfo.hpp */,
+				4C7FF13F215405AB000B5DB0 /* kern_efi.hpp */,
+				4C7FF140215405AB000B5DB0 /* kern_policy.hpp */,
+				4C7FF141215405AB000B5DB0 /* kern_user.hpp */,
+				4C7FF142215405AB000B5DB0 /* plugin_start.hpp */,
+				4C7FF143215405AB000B5DB0 /* kern_iokit.hpp */,
+				4C7FF144215405AB000B5DB0 /* kern_crypto.hpp */,
+				4C7FF145215405AB000B5DB0 /* kern_mach.hpp */,
+				4C7FF146215405AB000B5DB0 /* kern_compression.hpp */,
+				4C7FF147215405AB000B5DB0 /* kern_file.hpp */,
+				4C7FF148215405AB000B5DB0 /* kern_rtc.hpp */,
+				4C7FF149215405AB000B5DB0 /* kern_disasm.hpp */,
+				4C7FF14A215405AB000B5DB0 /* capstone */,
+				4C7FF155215405AB000B5DB0 /* kern_patcher.hpp */,
+				4C7FF156215405AB000B5DB0 /* Guid */,
+				4C7FF158215405AB000B5DB0 /* kern_compat.hpp */,
+				4C7FF159215405AB000B5DB0 /* kern_api.hpp */,
+				4C7FF15A215405AB000B5DB0 /* kern_util.hpp */,
+			);
+			name = Headers;
+			path = Lilu.kext/Contents/Resources/Headers;
+			sourceTree = "<group>";
+		};
+		4C7FF14A215405AB000B5DB0 /* capstone */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF14B215405AB000B5DB0 /* capstone.h */,
+				4C7FF14C215405AB000B5DB0 /* mips.h */,
+				4C7FF14D215405AB000B5DB0 /* sparc.h */,
+				4C7FF14E215405AB000B5DB0 /* systemz.h */,
+				4C7FF14F215405AB000B5DB0 /* arm.h */,
+				4C7FF150215405AB000B5DB0 /* x86.h */,
+				4C7FF151215405AB000B5DB0 /* ppc.h */,
+				4C7FF152215405AB000B5DB0 /* arm64.h */,
+				4C7FF153215405AB000B5DB0 /* xcore.h */,
+				4C7FF154215405AB000B5DB0 /* platform.h */,
+			);
+			path = capstone;
+			sourceTree = "<group>";
+		};
+		4C7FF156215405AB000B5DB0 /* Guid */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF157215405AB000B5DB0 /* LiluVariables.h */,
+			);
+			path = Guid;
+			sourceTree = "<group>";
+		};
+		4C7FF15B215405AB000B5DB0 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF15C215405AB000B5DB0 /* libkmod.a */,
+				4C7FF15D215405AB000B5DB0 /* wrappers */,
+				4C7FF162215405AB000B5DB0 /* security */,
+				4C7FF166215405AB000B5DB0 /* plugin_start.cpp */,
+				4C7FF167215405AB000B5DB0 /* LegacyIOService.h */,
+			);
+			name = Library;
+			path = Lilu.kext/Contents/Resources/Library;
+			sourceTree = "<group>";
+		};
+		4C7FF15D215405AB000B5DB0 /* wrappers */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF15E215405AB000B5DB0 /* entry64.S */,
+				4C7FF15F215405AB000B5DB0 /* build.tool */,
+				4C7FF160215405AB000B5DB0 /* entry32.S */,
+				4C7FF161215405AB000B5DB0 /* wrappers.inc */,
+			);
+			path = wrappers;
+			sourceTree = "<group>";
+		};
+		4C7FF162215405AB000B5DB0 /* security */ = {
+			isa = PBXGroup;
+			children = (
+				4C7FF163215405AB000B5DB0 /* mac_framework.h */,
+				4C7FF164215405AB000B5DB0 /* mac_policy.h */,
+				4C7FF165215405AB000B5DB0 /* _label.h */,
+			);
+			path = security;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -160,6 +331,7 @@
 			files = (
 				270DCF8E175CA27600004E6A /* FnKeysHIKeyboard.h in Headers */,
 				270DCF90175CA27600004E6A /* FnKeysHIKeyboardDevice.h in Headers */,
+				4C7FF138215404AD000B5DB0 /* KeyImplementations.hpp in Headers */,
 				4C1FD87B212B275600FB5745 /* KernEventServer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -210,7 +382,7 @@
 		27F96DEA16333B72003A6255 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0940;
 				ORGANIZATIONNAME = "Le Bao Hiep";
 			};
 			buildConfigurationList = 27F96DED16333B72003A6255 /* Build configuration list for PBXProject "AsusFnKeys" */;
@@ -259,6 +431,7 @@
 				27F96E0216333B72003A6255 /* AsusFnKeys.cpp in Sources */,
 				4C1FD87A212B275600FB5745 /* KernEventServer.cpp in Sources */,
 				270DCF8D175CA27600004E6A /* FnKeysHIKeyboard.cpp in Sources */,
+				4C7FF137215404AD000B5DB0 /* KeyImplementations.cpp in Sources */,
 				270DCF8F175CA27600004E6A /* FnKeysHIKeyboardDevice.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -278,15 +451,33 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -295,10 +486,13 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MODULE_NAME = com.hieplpvip.AsusFnKeys;
 				MODULE_VERSION = 1.0.2;
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
@@ -306,16 +500,35 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MODULE_NAME = com.hieplpvip.AsusFnKeys;
 				MODULE_VERSION = 1.0.2;
@@ -325,11 +538,21 @@
 		27F96E0716333B72003A6255 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CURRENT_PROJECT_VERSION = 1.0.2;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/VirtualSMC.kext/Contents/Resources/",
+					"$(PROJECT_DIR)/Lilu.kext/Contents/Resources/",
+				);
 				INFOPLIST_FILE = AsusFnKeys/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Lilu.kext/Contents/Resources/Library",
+				);
 				MODULE_NAME = com.hieplpvip.AsusFnKeys;
 				MODULE_VERSION = 1.0.2;
 				OTHER_CPLUSPLUSFLAGS = "-Wno-inconsistent-missing-override";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hieplpvip.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = AsusFnKeys;
 				WRAPPER_EXTENSION = kext;
 			};
@@ -338,11 +561,21 @@
 		27F96E0816333B72003A6255 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CURRENT_PROJECT_VERSION = 1.0.2;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/VirtualSMC.kext/Contents/Resources/",
+					"$(PROJECT_DIR)/Lilu.kext/Contents/Resources/",
+				);
 				INFOPLIST_FILE = AsusFnKeys/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Lilu.kext/Contents/Resources/Library",
+				);
 				MODULE_NAME = com.hieplpvip.AsusFnKeys;
 				MODULE_VERSION = 1.0.2;
 				OTHER_CPLUSPLUSFLAGS = "-Wno-inconsistent-missing-override";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hieplpvip.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = AsusFnKeys;
 				WRAPPER_EXTENSION = kext;
 			};

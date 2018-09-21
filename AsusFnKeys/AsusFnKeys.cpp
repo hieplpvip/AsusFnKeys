@@ -32,6 +32,9 @@
 #define DEBUG_LOG(fmt, args...)
 #endif
 
+bool ADDPR(debugEnabled) = true;
+uint32_t ADDPR(debugPrintDelay) = 0;
+
 #ifdef DEBUG
 /*
  * GUID parsing functions
@@ -86,15 +89,15 @@ void AsusFnKeys::wmi_swap_bytes(UInt8 *src, UInt8 *dest)
     int i;
     
     for (i = 0; i <= 3; i++)
-        memcpy(dest + i, src + (3 - i), 1);
+        lilu_os_memcpy(dest + i, src + (3 - i), 1);
     
     for (i = 0; i <= 1; i++)
-        memcpy(dest + 4 + i, src + (5 - i), 1);
+        lilu_os_memcpy(dest + 4 + i, src + (5 - i), 1);
     
     for (i = 0; i <= 1; i++)
-        memcpy(dest + 6 + i, src + (7 - i), 1);
+        lilu_os_memcpy(dest + 6 + i, src + (7 - i), 1);
     
-    memcpy(dest + 8, src + 8, 8);
+    lilu_os_memcpy(dest + 8, src + 8, 8);
 }
 
 /**
@@ -198,23 +201,23 @@ OSString * AsusFnKeys::flagsToStr(UInt8 flags)
     {
         if (flags & ACPI_WMI_EXPENSIVE)
         {
-            strncpy(pos, "ACPI_WMI_EXPENSIVE ", 20);
+            lilu_os_strncpy(pos, "ACPI_WMI_EXPENSIVE ", 20);
             pos += strlen(pos);
         }
         if (flags & ACPI_WMI_METHOD)
         {
-            strncpy(pos, "ACPI_WMI_METHOD ", 20);
+            lilu_os_strncpy(pos, "ACPI_WMI_METHOD ", 20);
             pos += strlen(pos);
             DEBUG_LOG("%s::WMI METHOD\n", getName());
         }
         if (flags & ACPI_WMI_STRING)
         {
-            strncpy(pos, "ACPI_WMI_STRING ", 20);
+            lilu_os_strncpy(pos, "ACPI_WMI_STRING ", 20);
             pos += strlen(pos);
         }
         if (flags & ACPI_WMI_EVENT)
         {
-            strncpy(pos, "ACPI_WMI_EVENT ", 20);
+            lilu_os_strncpy(pos, "ACPI_WMI_EVENT ", 20);
             pos += strlen(pos);
             DEBUG_LOG("%s::WMI EVENT\n", getName());
         }
@@ -272,7 +275,7 @@ OSDictionary * AsusFnKeys::readDataBlock(char *str)
     
     do
     {
-        if (WMIDevice->evaluateObject(name, &wqxx) != kIOReturnSuccess)
+        if (atkDevice->evaluateObject(name, &wqxx) != kIOReturnSuccess)
         {
             IOLog("%s::No object of method %s\n", getName(), name);
             continue;
@@ -301,7 +304,7 @@ int AsusFnKeys::parse_wdg(OSDictionary *dict)
     
     do
     {
-        if (WMIDevice->evaluateObject("_WDG", &wdg) != kIOReturnSuccess)
+        if (atkDevice->evaluateObject("_WDG", &wdg) != kIOReturnSuccess)
         {
             IOLog("%s::No object of method _WDG\n", getName());
             continue;
@@ -366,9 +369,6 @@ bool AsusFnKeys::init(OSDictionary *dict)
     hasKeybrdBLight = false;
     hasMediaButtons = true;
     
-    isautoOff = false;
-    autoOffEnable = true;
-    
     _notificationServices = OSSet::withCapacity(1);
     
     kev.setVendorID("com.hieplpvip");
@@ -427,9 +427,9 @@ bool AsusFnKeys::start(IOService *provider)
         return false;
     }
     
-    WMIDevice = (IOACPIPlatformDevice *) provider;
+    atkDevice = (IOACPIPlatformDevice *) provider;
     
-    IOLog("%s::Found WMI Device %s\n", getName(), WMIDevice->getName());
+    IOLog("%s::Found WMI Device %s\n", getName(), atkDevice->getName());
     
     _keyboardDevice = NULL;
     
@@ -466,33 +466,118 @@ bool AsusFnKeys::start(IOService *provider)
     
     propertyMatch->release();
     
-    _workLoop = getWorkLoop();
-    if (!_workLoop){
+    workloop = getWorkLoop();
+    if (!workloop){
         DEBUG_LOG("%s::Failed to get workloop!\n", getName());
         return false;
     }
-    _workLoop->retain();
+    workloop->retain();
     
     command_gate = IOCommandGate::commandGate(this);
     if (!command_gate) {
         return false;
     }
-    _workLoop->addEventSource(command_gate);
+    workloop->addEventSource(command_gate);
     
-    if (autoOffEnable && hasKeybrdBLight)
-    {
-        resetTimer();
-        keytime += 1000000000; // small hack to avoid auto off on start
-        
-        _autoOffTimer = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &AsusFnKeys::autoOffTimer));
-        _workLoop->addEventSource(_autoOffTimer);
-        _autoOffTimer->setTimeoutMS(500);
-        
-        if (!_autoOffTimer)
-            return false;
-    }
+    vsmcNotifier = VirtualSMCAPI::registerHandler(vsmcNotificationHandler, this);
+    
+    ALSSensor sensor {ALSSensor::Type::Unknown7, true, 6, false};
+    ALSSensor noSensor {ALSSensor::Type::NoSensor, false, 0, false};
+    SMCALSValue::Value emptyValue;
+    SMCKBrdBLightValue::lkb lkb;
+    SMCKBrdBLightValue::lks lks;
+    
+    VirtualSMCAPI::addKey(KeyAL, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(0, &forceBits, SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE));
+    
+    VirtualSMCAPI::addKey(KeyALI0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&sensor), sizeof(sensor), SmcKeyTypeAli, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    VirtualSMCAPI::addKey(KeyALI1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&noSensor), sizeof(noSensor), SmcKeyTypeAli, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    
+    VirtualSMCAPI::addKey(KeyALRV, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(1, nullptr, SMC_KEY_ATTRIBUTE_READ));
+    
+    VirtualSMCAPI::addKey(KeyALV0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, new SMCALSValue(&currentLux, &forceBits),
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    VirtualSMCAPI::addKey(KeyALV1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    VirtualSMCAPI::addKey(KeyLKSB, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&lkb), sizeof(lkb), SmcKeyTypeLkb, new SMCKBrdBLightValue(atkDevice),
+        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    VirtualSMCAPI::addKey(KeyLKSS, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&lks), sizeof(lks), SmcKeyTypeLks, nullptr,
+        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+    
+    VirtualSMCAPI::addKey(KeyMSLD, vsmcPlugin.data, VirtualSMCAPI::valueWithUint8(0, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
     
     return true;
+}
+
+bool AsusFnKeys::vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier) {
+    if (sensors && vsmc) {
+        DBGLOG("asld", "got vsmc notification");
+        auto self = static_cast<AsusFnKeys *>(sensors);
+        auto ret = vsmc->callPlatformFunction(VirtualSMCAPI::SubmitPlugin, true, sensors, &self->vsmcPlugin, nullptr, nullptr);
+        if (ret == kIOReturnSuccess) {
+            DBGLOG("asld", "submitted plugin");
+            
+            self->workloop = self->getWorkLoop();
+            self->poller = IOTimerEventSource::timerEventSource(self, [](OSObject *object, IOTimerEventSource *sender) {
+                auto ls = OSDynamicCast(AsusFnKeys, object);
+                if (ls) ls->refreshSensor(true);
+            });
+            
+            if (!self->poller || !self->workloop) {
+                SYSLOG("asld", "failed to create poller or workloop");
+                return false;
+            }
+            
+            if (self->workloop->addEventSource(self->poller) != kIOReturnSuccess) {
+                SYSLOG("asld", "failed to add timer event source to workloop");
+                return false;
+            }
+            
+            if (self->poller->setTimeoutMS(SensorUpdateTimeoutMS) != kIOReturnSuccess) {
+                SYSLOG("asld", "failed to set timeout");
+                return false;
+            }
+            
+            return true;
+        } else if (ret != kIOReturnUnsupported) {
+            SYSLOG("asld", "plugin submission failure %X", ret);
+        } else {
+            DBGLOG("asld", "plugin submission to non vsmc");
+        }
+    } else {
+        SYSLOG("asld", "got null vsmc notification");
+    }
+    
+    return false;
+}
+
+bool AsusFnKeys::refreshSensor(bool post) {
+    uint32_t lux = 0;
+    auto ret = atkDevice->evaluateInteger("ALSS", &lux);
+    if (ret != kIOReturnSuccess)
+        lux = 0xFFFFFFFF; // ACPI invalid
+    
+    atomic_store_explicit(&currentLux, lux, memory_order_release);
+    
+    if (post) {
+        VirtualSMCAPI::postInterrupt(SmcEventALSChange);
+        poller->setTimeoutMS(SensorUpdateTimeoutMS);
+    }
+    
+    return ret == kIOReturnSuccess;
 }
 
 void AsusFnKeys::stop(IOService *provider)
@@ -504,9 +589,9 @@ void AsusFnKeys::stop(IOService *provider)
     }
     OSSafeReleaseNULL(_autoOffTimer);
     
-    _workLoop->removeEventSource(command_gate);
+    workloop->removeEventSource(command_gate);
     OSSafeReleaseNULL(command_gate);
-    OSSafeReleaseNULL(_workLoop);
+    OSSafeReleaseNULL(workloop);
     
     disableEvent();
     PMstop();
@@ -547,20 +632,6 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
             setKeyboardBackLight(keybrdBLightLvl);
             DEBUG_LOG("%s::Restore keyboard backlight %d\n", getName(), keybrdBLightLvl);
         }
-        
-        if (autoOffEnable && hasKeybrdBLight)
-        {
-            resetTimer();
-            
-            if (_autoOffTimer){
-                _autoOffTimer->cancelTimeout();
-            }
-            OSSafeReleaseNULL(_autoOffTimer);
-            
-            _autoOffTimer = IOTimerEventSource::timerEventSource(this, OSMemberFunctionCast(IOTimerEventSource::Action, this, &AsusFnKeys::autoOffTimer));
-            _workLoop->addEventSource(_autoOffTimer);
-            _autoOffTimer->setTimeoutMS(500);
-        }
     }
     
     return IOPMAckImplied;
@@ -573,11 +644,11 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
 void AsusFnKeys::parseConfig()
 {
     // Detect keyboard backlight support
-    if (WMIDevice->validateObject("SKBL") == kIOReturnSuccess && WMIDevice->validateObject("GKBL") == kIOReturnSuccess)
+    if (atkDevice->validateObject("SKBL") == kIOReturnSuccess && atkDevice->validateObject("GKBL") == kIOReturnSuccess)
     {
         hasKeybrdBLight = true;
         // Detect keyboard backlight levels
-        if (WMIDevice->validateObject("KBPW") == kIOReturnSuccess)
+        if (atkDevice->validateObject("KBPW") == kIOReturnSuccess)
             keybrdBLight16 = true;
         else
             keybrdBLight16 = false;
@@ -590,7 +661,7 @@ void AsusFnKeys::parseConfig()
     }
     
     // Detect ALS sensor
-    if (WMIDevice->validateObject("ALSC") == kIOReturnSuccess && WMIDevice->validateObject("ALSS") == kIOReturnSuccess)
+    if (atkDevice->validateObject("ALSC") == kIOReturnSuccess && atkDevice->validateObject("ALSS") == kIOReturnSuccess)
     {
         hasALSensor = true;
         IOLog("%s::Found ALS sensor\n", getName());
@@ -622,18 +693,12 @@ void AsusFnKeys::parseConfig()
                 if (tmpNumber) {
                     if(!strncmp(tmpStr, "KeyboardBLightLevelAtBoot", strlen(tmpStr)))
                         keybrdBLightLvl = tmpNumber->unsigned8BitValue();
-                    
-                    else if(!strncmp(tmpStr, "IdleKBacklightAutoOffTimeout", strlen(tmpStr)))
-                        autoOffTimeout = tmpNumber->unsigned64BitValue() * 1000000;
                 }
                 
                 if (tmpBoolean)
                 {
                     if(!strncmp(tmpStr, "HasMediaButtons", strlen(tmpStr)))
                         hasMediaButtons = tmpBoolean->getValue();
-                    
-                    else if(!strncmp(tmpStr, "IdleKBacklightAutoOff", strlen(tmpStr)))
-                        autoOffEnable = tmpBoolean->getValue();
                 }
             }
         }
@@ -642,23 +707,13 @@ void AsusFnKeys::parseConfig()
 
 IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
 {
-    if (type == kKeyboardKeyPressTime || type == kKeyboardModifierKeyPressTime)
-    {
-        DEBUG_LOG("%s::keyPressed = %llu\n", getName(), keytime);
-        keytime = *((uint64_t*)argument);
-        if (isautoOff && keybrdBLightLvl)
-        {
-            setKeyboardBackLight(keybrdBLightLvl);
-            isautoOff = false;
-        }
-    }
-    else if (type == kIOACPIMessageDeviceNotification)
+    if (type == kIOACPIMessageDeviceNotification)
     {
         UInt32 event = *((UInt32 *) argument);
         OSObject * wed;
         
         OSNumber * number = OSNumber::withNumber(event,32);
-        WMIDevice->evaluateObject("_WED", &wed, (OSObject**)&number,1);
+        atkDevice->evaluateObject("_WED", &wed, (OSObject**)&number,1);
         number->release();
         number = OSDynamicCast(OSNumber, wed);
         if (NULL == number)
@@ -698,38 +753,10 @@ IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
     return kIOReturnSuccess;
 }
 
-void AsusFnKeys::autoOffTimer()
-{
-    uint64_t now_abs;
-    clock_get_uptime(&now_abs);
-    uint64_t now_ns;
-    absolutetime_to_nanoseconds(now_abs, &now_ns);
-    
-    DEBUG_LOG("%s::autoOffTimer %llu\n", getName(), now_ns - keytime);
-    if (now_ns - keytime > autoOffTimeout && !isautoOff)
-    {
-        keybrdBLightLvl = getKeyboardBackLight();
-        if (keybrdBLightLvl>0) setKeyboardBackLight(0, false);
-        isautoOff = true;
-    }
-    
-    _autoOffTimer->setTimeoutMS(500);
-}
-
-void AsusFnKeys::resetTimer()
-{
-    uint64_t now_abs;
-    clock_get_uptime(&now_abs);
-    absolutetime_to_nanoseconds(now_abs, &keytime);
-    isautoOff = false;
-}
-
 void AsusFnKeys::handleMessage(int code)
 {
     loopCount = 0;
     bool show = false;
-    
-    resetTimer();
     
     // Processing the code
     switch (code) {
@@ -782,7 +809,7 @@ void AsusFnKeys::handleMessage(int code)
             
             /*params[0] = OSNumber::withNumber(4, 8);
              
-             if(WMIDevice->evaluateInteger("PSTT", &res, params, 1))
+             if(atkDevice->evaluateInteger("PSTT", &res, params, 1))
              IOLog("%s::Processor speedstep Changed\n", getName());
              else
              IOLog("%s::Processor speedstep change failed %d\n", getName(), res);*/
@@ -810,7 +837,7 @@ void AsusFnKeys::handleMessage(int code)
             if(hasALSensor)
             {
                 UInt32 alsValue = 0;
-                WMIDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
+                atkDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
                 DEBUG_LOG("%s::ALS %d\n", getName(), alsValue);
             }
             break;
@@ -901,7 +928,7 @@ void AsusFnKeys::enableALS(bool state)
     UInt32 res;
     params[0] = OSNumber::withNumber(state, 8);
     
-    if(WMIDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
+    if(atkDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
         DEBUG_LOG("%s::ALS %s %d\n", getName(), state ? "enabled" : "disabled", res);
     else
         DEBUG_LOG("%s::Failed to call ALSC\n", getName());
@@ -909,7 +936,7 @@ void AsusFnKeys::enableALS(bool state)
 
 UInt8 AsusFnKeys::getKeyboardBackLight()
 {
-    if (WMIDevice->validateObject("GKBL") != kIOReturnSuccess)
+    if (atkDevice->validateObject("GKBL") != kIOReturnSuccess)
     {
         DEBUG_LOG("%s::Keyboard backlight not found\n", getName());
         return -1;
@@ -920,7 +947,7 @@ UInt8 AsusFnKeys::getKeyboardBackLight()
         UInt32 res;
         params[0] = OSNumber::withNumber(0ULL, 8);
         
-        if (WMIDevice->evaluateInteger("GKBL", &res, params, 1) != kIOReturnSuccess)
+        if (atkDevice->evaluateInteger("GKBL", &res, params, 1) != kIOReturnSuccess)
         {
             DEBUG_LOG("%s::Failed to get keyboard backlight\n", getName());
             return -1;
@@ -932,7 +959,7 @@ UInt8 AsusFnKeys::getKeyboardBackLight()
 
 void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram, bool display)
 {
-    if (WMIDevice->validateObject("SKBL") != kIOReturnSuccess)
+    if (atkDevice->validateObject("SKBL") != kIOReturnSuccess)
         DEBUG_LOG("%s::Keyboard backlight not found\n", getName());
     else
     {
@@ -940,7 +967,7 @@ void AsusFnKeys::setKeyboardBackLight(UInt8 level, bool nvram, bool display)
         OSObject * ret = NULL;
         params[0] = OSNumber::withNumber(level, sizeof(level)*8);
         
-        if (WMIDevice->evaluateObject("SKBL", &ret, params, 1) != kIOReturnSuccess)
+        if (atkDevice->evaluateObject("SKBL", &ret, params, 1) != kIOReturnSuccess)
         {
             DEBUG_LOG("%s::Failed to set keyboard backlight\n", getName());
             return;
@@ -1097,7 +1124,7 @@ UInt8 AsusFnKeys::readKBBacklightFromNVRAM(void)
                     val = 0;
                     unsigned l = number->getLength();
                     if (l <= sizeof(val))
-                        memcpy(&val, number->getBytesNoCopy(), l);
+                        lilu_os_memcpy(&val, number->getBytesNoCopy(), l);
                     DEBUG_LOG("%s::Keyboard backlight value from NVRAM: %d\n", getName(), val);
                 }
                 else
@@ -1134,7 +1161,7 @@ void AsusFnKeys::getDeviceStatus(const char * guid, UInt32 methodId, UInt32 devi
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSNumber::withNumber(deviceId,32);
     
-    WMIDevice->evaluateInteger(method, status, params, 3);
+    atkDevice->evaluateInteger(method, status, params, 3);
     
     params[0]->release();
     params[1]->release();
@@ -1161,15 +1188,15 @@ void AsusFnKeys::setDeviceStatus(const char * guid, UInt32 methodId, UInt32 devi
     
     snprintf(method, 5, "WM%s", str->getCStringNoCopy());
     
-    memcpy(buffer, &deviceId, 4);
-    memcpy(buffer+4, status, 4);
+    lilu_os_memcpy(buffer, &deviceId, 4);
+    lilu_os_memcpy(buffer+4, status, 4);
     
     params[0] = OSNumber::withNumber(0x00D,32);
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSData::withBytes(buffer, 8);
     
     *status = ~0;
-    WMIDevice->evaluateInteger(method, status, params, 3);
+    atkDevice->evaluateInteger(method, status, params, 3);
     
     DEBUG_LOG("%s::setDeviceStatus Res = %x\n", getName(), (unsigned int)*status);
     
@@ -1198,14 +1225,14 @@ void AsusFnKeys::setDevice(const char * guid, UInt32 methodId, UInt32 *status)
     
     snprintf(method, 5, "WM%s", str->getCStringNoCopy());
     
-    memcpy(buffer, status, 4);
+    lilu_os_memcpy(buffer, status, 4);
     
     params[0] = OSNumber::withNumber(0x00D,32);
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSData::withBytes(buffer, 8);
     
     *status = ~0;
-    WMIDevice->evaluateInteger(method, status, params, 3);
+    atkDevice->evaluateInteger(method, status, params, 3);
     
     DEBUG_LOG("%s::setDevice Res = %x\n", getName(), (unsigned int)*status);
     
@@ -1241,7 +1268,7 @@ IOReturn AsusFnKeys::enableFnKeyEvents(const char * guid, UInt32 methodId)
 {
     //Asus WMI Specific Method Inside the DSDT
     //Calling the Asus Method INIT from the DSDT to enable the Hotkey Events
-    WMIDevice->evaluateObject("INIT", NULL, NULL, NULL);
+    atkDevice->evaluateObject("INIT", NULL, NULL, NULL);
     
     return kIOReturnSuccess;
 }
@@ -1343,4 +1370,17 @@ void AsusFnKeys::dispatchMessageGated(int* message, void* data)
 void AsusFnKeys::dispatchMessage(int message, void* data)
 {
     command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &AsusFnKeys::dispatchMessageGated), &message, data);
+}
+
+EXPORT extern "C" kern_return_t ADDPR(kern_start)(kmod_info_t *, void *) {
+    // Report success but actually do not start and let I/O Kit unload us.
+    // This works better and increases boot speed in some cases.
+    PE_parse_boot_argn("liludelay", &ADDPR(debugPrintDelay), sizeof(ADDPR(debugPrintDelay)));
+    ADDPR(debugEnabled) = checkKernelArgument("-vsmcdbg");
+    return KERN_SUCCESS;
+}
+
+EXPORT extern "C" kern_return_t ADDPR(kern_stop)(kmod_info_t *, void *) {
+    // It is not safe to unload VirtualSMC plugins!
+    return KERN_FAILURE;
 }

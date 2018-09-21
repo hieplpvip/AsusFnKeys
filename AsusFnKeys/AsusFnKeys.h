@@ -38,6 +38,7 @@
 
 #include "FnKeysHIKeyboardDevice.h"
 #include "KernEventServer.h"
+#include "KeyImplementations.hpp"
 
 struct guid_block {
     char guid[16];
@@ -203,12 +204,88 @@ class AsusFnKeys : public IOService
 {
     OSDeclareDefaultStructors(AsusFnKeys)
     
-protected:
-    IOACPIPlatformDevice * WMIDevice;
-    FnKeysHIKeyboardDevice * _keyboardDevice;
-    KernEventServer kev;
+    /**
+     *  Key name definitions for VirtualSMC
+     */
+    static constexpr SMC_KEY KeyAL   = SMC_MAKE_IDENTIFIER('A','L','!',' ');
+    static constexpr SMC_KEY KeyALI0 = SMC_MAKE_IDENTIFIER('A','L','I','0');
+    static constexpr SMC_KEY KeyALI1 = SMC_MAKE_IDENTIFIER('A','L','I','1');
+    static constexpr SMC_KEY KeyALRV = SMC_MAKE_IDENTIFIER('A','L','R','V');
+    static constexpr SMC_KEY KeyALV0 = SMC_MAKE_IDENTIFIER('A','L','V','0');
+    static constexpr SMC_KEY KeyALV1 = SMC_MAKE_IDENTIFIER('A','L','V','1');
+    static constexpr SMC_KEY KeyLKSB = SMC_MAKE_IDENTIFIER('L','K','S','B');
+    static constexpr SMC_KEY KeyLKSS = SMC_MAKE_IDENTIFIER('L','K','S','S');
+    static constexpr SMC_KEY KeyMSLD = SMC_MAKE_IDENTIFIER('M','S','L','D');
     
-    OSDictionary * properties;
+    /**
+     *  VirtualSMC service registration notifier
+     */
+    IONotifier *vsmcNotifier {nullptr};
+    
+    /**
+     *  Registered plugin instance
+     */
+    VirtualSMCAPI::Plugin vsmcPlugin {
+        xStringify(PRODUCT_NAME),
+        parseModuleVersion(xStringify(MODULE_VERSION)),
+        VirtualSMCAPI::Version,
+    };
+    
+    /**
+     *  A workloop in charge of handling timer events with requests.
+     */
+    IOWorkLoop *workloop {nullptr};
+    
+    /**
+     *  Workloop timer event source for status updates
+     */
+    IOTimerEventSource *poller {nullptr};
+    
+    /**
+     *  Interrupt submission timeout
+     */
+    static constexpr uint32_t SensorUpdateTimeoutMS {1000};
+    
+    /**
+     *  ALSSensor structure contains sensor-specific information for this system
+     */
+    struct ALSSensor {
+        /**
+         *  Supported sensor types
+         */
+        enum Type : uint8_t {
+            NoSensor  = 0,
+            BS520     = 1,
+            TSL2561CS = 2,
+            LX1973A   = 3,
+            ISL29003  = 4,
+            Unknown7  = 7
+        };
+        
+        /**
+         *  Sensor type
+         */
+        Type sensorType {Type::NoSensor};
+        
+        /**
+         * TRUE if no lid or if sensor works with closed lid.
+         * FALSE otherwise.
+         */
+        bool validWhenLidClosed {false};
+        
+        /**
+         *  Possibly ID
+         */
+        uint8_t unknown {0};
+        
+        /**
+         * TRUE if the SIL brightness depends on this sensor's value.
+         * FALSE otherwise.
+         */
+        bool controlSIL {false};
+        
+        ALSSensor(Type sensorType, bool validWhenLidClosed, uint8_t unknown, bool controlSIL): sensorType(sensorType), validWhenLidClosed(validWhenLidClosed), unknown(unknown), controlSIL(controlSIL) {}
+    };
     
 public:
     virtual IOReturn message(UInt32 type, IOService * provider, void * argument);
@@ -223,7 +300,52 @@ public:
     //power management events
     virtual IOReturn    setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker);
     
+    /**
+     *  Submit the keys to received VirtualSMC service.
+     *
+     *  @param sensors   SMCLightSensor service
+     *  @param refCon    reference
+     *  @param vsmc      VirtualSMC service
+     *  @param notifier  created notifier
+     */
+    static bool vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier);
+    
+    /**
+     *  Refresh sensor values to inform macOS with light changes
+     *
+     *  @param post  post an SMC notification
+     */
+    bool refreshSensor(bool post);
+    
 protected:
+    
+    /**
+     *  Asus ATK device
+     */
+    IOACPIPlatformDevice * atkDevice;
+    
+    /**
+     *  Virtual keyboard device
+     */
+    FnKeysHIKeyboardDevice * _keyboardDevice;
+    
+    /**
+     *  Send notifications to user-space daemon
+     */
+    KernEventServer kev;
+    
+    /**
+     *  Current lux value obtained from ACPI
+     */
+    _Atomic(uint32_t) currentLux;
+    
+    /**
+     *  Supported ALS bits
+     */
+    ALSForceBits forceBits;
+    
+    OSDictionary * properties;
+    
     OSDictionary* getDictByUUID(const char * guid);
     IOReturn enableFnKeyEvents(const char * guid, UInt32 methodID);
     
@@ -236,6 +358,9 @@ protected:
     
     void enableALS(bool state);
     
+    /**
+     *  Keyboard backlight
+     */
     bool keybrdBLight16;
     UInt8 keybrdBLightLvl, curKeybrdBlvl;
     void saveKBBacklightToNVRAM(UInt8 level);
@@ -243,6 +368,9 @@ protected:
     UInt8 getKeyboardBackLight();
     void setKeyboardBackLight(UInt8 level, bool nvram = true, bool display = false);
     
+    /**
+     *  Brightness
+     */
     UInt32 panelBrightnessLevel;
     char backlightEntry[1000];
     int checkBacklightEntry();
@@ -266,19 +394,15 @@ protected:
     bool   hasMediaButtons, hasKeybrdBLight;
     int    loopCount;
     
-    IOWorkLoop *_workLoop;
     IOTimerEventSource *_autoOffTimer;
     IOCommandGate* command_gate;
-    
-    void autoOffTimer();
-    void resetTimer();
-    bool isautoOff, autoOffEnable;
-    uint64_t keytime = 0;
-    uint64_t autoOffTimeout = 10000000000; // 10 seconds
     
     IONotifier* _publishNotify;
     IONotifier* _terminateNotify;
     OSSet* _notificationServices;
+    
+    // Virtual SMC plugin part
+    
     
 private:
     int parse_wdg(OSDictionary *dict);
