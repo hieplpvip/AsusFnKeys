@@ -26,32 +26,29 @@
 
 #include "AsusFnKeys.h"
 
-#if DEBUG
-#define DEBUG_LOG(fmt, args...) IOLog(fmt, ## args)
-#else
-#define DEBUG_LOG(fmt, args...)
-#endif
-
 bool ADDPR(debugEnabled) = true;
 uint32_t ADDPR(debugPrintDelay) = 0;
+
+#pragma mark -
+#pragma mark WMI code ported from Linux
+#pragma mark -
 
 /*
  * GUID parsing functions
  */
 /**
  * wmi_parse_hexbyte - Convert a ASCII hex number to a byte
- * @src:  Pointer to at least 2 characters to convert.
+ * @param src:  Pointer to at least 2 characters to convert.
  *
  * Convert a two character ASCII hex string to a number.
  *
  * Return:  0-255  Success, the byte was parsed correctly
  *          -1     Error, an invalid character was supplied
  */
-int AsusFnKeys::wmi_parse_hexbyte(const UInt8 *src)
-{
+int AsusFnKeys::wmi_parse_hexbyte(const UInt8 *src) {
     unsigned int x; /* For correct wrapping */
     int h;
-    
+
     /* high part */
     x = src[0];
     if (x - '0' <= '9' - '0') {
@@ -64,7 +61,7 @@ int AsusFnKeys::wmi_parse_hexbyte(const UInt8 *src)
         return -1;
     }
     h <<= 4;
-    
+
     /* low part */
     x = src[1];
     if (x - '0' <= '9' - '0')
@@ -78,46 +75,44 @@ int AsusFnKeys::wmi_parse_hexbyte(const UInt8 *src)
 
 /**
  * wmi_swap_bytes - Rearrange GUID bytes to match GUID binary
- * @src:   Memory block holding binary GUID (16 bytes)
- * @dest:  Memory block to hold byte swapped binary GUID (16 bytes)
+ * @param src:   Memory block holding binary GUID (16 bytes)
+ * @param dest:  Memory block to hold byte swapped binary GUID (16 bytes)
  *
  * Byte swap a binary GUID to match it's real GUID value
  */
-void AsusFnKeys::wmi_swap_bytes(UInt8 *src, UInt8 *dest)
-{
+void AsusFnKeys::wmi_swap_bytes(UInt8 *src, UInt8 *dest) {
     int i;
-    
+
     for (i = 0; i <= 3; i++)
         lilu_os_memcpy(dest + i, src + (3 - i), 1);
-    
+
     for (i = 0; i <= 1; i++)
         lilu_os_memcpy(dest + 4 + i, src + (5 - i), 1);
-    
+
     for (i = 0; i <= 1; i++)
         lilu_os_memcpy(dest + 6 + i, src + (7 - i), 1);
-    
+
     lilu_os_memcpy(dest + 8, src + 8, 8);
 }
 
 /**
  * wmi_parse_guid - Convert GUID from ASCII to binary
- * @src:   36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
- * @dest:  Memory block to hold binary GUID (16 bytes)
+ * @param src:   36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @param dest:  Memory block to hold binary GUID (16 bytes)
  *
  * N.B. The GUID need not be NULL terminated.
  *
  * Return:  'true'   @dest contains binary GUID
  *          'false'  @dest contents are undefined
  */
-bool AsusFnKeys::wmi_parse_guid(const UInt8 *src, UInt8 *dest)
-{
+bool AsusFnKeys::wmi_parse_guid(const UInt8 *src, UInt8 *dest) {
     static const int size[] = { 4, 2, 2, 2, 6 };
     int i, j, v;
-    
+
     if (src[8]  != '-' || src[13] != '-' ||
         src[18] != '-' || src[23] != '-')
         return false;
-    
+
     for (j = 0; j < 5; j++, src++) {
         for (i = 0; i < size[j]; i++, src += 2, *dest++ = v) {
             v = wmi_parse_hexbyte(src);
@@ -125,36 +120,35 @@ bool AsusFnKeys::wmi_parse_guid(const UInt8 *src, UInt8 *dest)
                 return false;
         }
     }
-    
+
     return true;
 }
 
 /**
  * wmi_dump_wdg - dumps tables to dmesg
- * @src: guid_block *
+ * @param src: guid_block *
  */
-void AsusFnKeys::wmi_dump_wdg(struct guid_block *g)
-{
+void AsusFnKeys::wmi_dump_wdg(struct guid_block *g) {
     char guid_string[37];
-    
+
     wmi_data2Str(g->guid, guid_string);
-    DEBUG_LOG("%s:\n", guid_string);
+    DBGLOG("atk", "%s:\n", guid_string);
     if (g->flags & ACPI_WMI_EVENT)
-        DEBUG_LOG("\tnotify_value: %02X\n", g->notify_id);
+        DBGLOG("atk", "\tnotify_value: %02X\n", g->notify_id);
     else
-        DEBUG_LOG("\tobject_id: %c%c\n",g->object_id[0], g->object_id[1]);
-    DEBUG_LOG("\tinstance_count: %d\n", g->instance_count);
-    DEBUG_LOG("\tflags: %#x", g->flags);
+        DBGLOG("atk", "\tobject_id: %c%c\n",g->object_id[0], g->object_id[1]);
+    DBGLOG("atk", "\tinstance_count: %d\n", g->instance_count);
+    DBGLOG("atk", "\tflags: %#x", g->flags);
     if (g->flags) {
-        DEBUG_LOG(" ");
+        DBGLOG("atk", " ");
         if (g->flags & ACPI_WMI_EXPENSIVE)
-            DEBUG_LOG("ACPI_WMI_EXPENSIVE ");
+            DBGLOG("atk", "ACPI_WMI_EXPENSIVE ");
         if (g->flags & ACPI_WMI_METHOD)
-            DEBUG_LOG("ACPI_WMI_METHOD ");
+            DBGLOG("atk", "ACPI_WMI_METHOD ");
         if (g->flags & ACPI_WMI_STRING)
-            DEBUG_LOG("ACPI_WMI_STRING ");
+            DBGLOG("atk", "ACPI_WMI_STRING ");
         if (g->flags & ACPI_WMI_EVENT)
-            DEBUG_LOG("ACPI_WMI_EVENT ");
+            DBGLOG("atk", "ACPI_WMI_EVENT ");
     }
 }
 
@@ -162,13 +156,12 @@ void AsusFnKeys::wmi_dump_wdg(struct guid_block *g)
  * wmi_data2Str - converts binary guid to ascii guid
  *
  */
-int AsusFnKeys::wmi_data2Str(const char *in, char *out)
-{
+int AsusFnKeys::wmi_data2Str(const char *in, char *out) {
     int i;
-    
+
     for (i = 3; i >= 0; i--)
         out += snprintf(out, 3, "%02X", in[i] & 0xFF);
-    
+
     out += snprintf(out, 2, "-");
     out += snprintf(out, 3, "%02X", in[5] & 0xFF);
     out += snprintf(out, 3, "%02X", in[4] & 0xFF);
@@ -179,10 +172,10 @@ int AsusFnKeys::wmi_data2Str(const char *in, char *out)
     out += snprintf(out, 3, "%02X", in[8] & 0xFF);
     out += snprintf(out, 3, "%02X", in[9] & 0xFF);
     out += snprintf(out, 2, "-");
-    
+
     for (i = 10; i <= 15; i++)
         out += snprintf(out, 3, "%02X", in[i] & 0xFF);
-    
+
     *out = '\0';
     return 0;
 }
@@ -191,41 +184,33 @@ int AsusFnKeys::wmi_data2Str(const char *in, char *out)
  * flagsToStr - converts binary flag to ascii flag
  *
  */
-OSString * AsusFnKeys::flagsToStr(UInt8 flags)
-{
+OSString * AsusFnKeys::flagsToStr(UInt8 flags) {
     char str[80];
     char *pos = str;
-    if (flags != 0)
-    {
-        if (flags & ACPI_WMI_EXPENSIVE)
-        {
+    if (flags != 0) {
+        if (flags & ACPI_WMI_EXPENSIVE) {
             lilu_os_strncpy(pos, "ACPI_WMI_EXPENSIVE ", 20);
             pos += strlen(pos);
         }
-        if (flags & ACPI_WMI_METHOD)
-        {
+        if (flags & ACPI_WMI_METHOD) {
             lilu_os_strncpy(pos, "ACPI_WMI_METHOD ", 20);
             pos += strlen(pos);
-            DEBUG_LOG("%s::WMI METHOD\n", getName());
+            DBGLOG("atk", "WMI METHOD\n");
         }
-        if (flags & ACPI_WMI_STRING)
-        {
+        if (flags & ACPI_WMI_STRING) {
             lilu_os_strncpy(pos, "ACPI_WMI_STRING ", 20);
             pos += strlen(pos);
         }
-        if (flags & ACPI_WMI_EVENT)
-        {
+        if (flags & ACPI_WMI_EVENT) {
             lilu_os_strncpy(pos, "ACPI_WMI_EVENT ", 20);
             pos += strlen(pos);
-            DEBUG_LOG("%s::WMI EVENT\n", getName());
+            DBGLOG("atk", "WMI EVENT\n");
         }
         //suppress the last trailing space
         str[strlen(str)] = 0;
     }
     else
-    {
         str[0] = 0;
-    }
     return (OSString::withCString(str));
 }
 
@@ -233,19 +218,17 @@ OSString * AsusFnKeys::flagsToStr(UInt8 flags)
  * wmi_wdg2reg - adds the WDG structure to a dictionary
  *
  */
-void AsusFnKeys::wmi_wdg2reg(struct guid_block *g, OSArray *array, OSArray *dataArray)
-{
+void AsusFnKeys::wmi_wdg2reg(struct guid_block *g, OSArray *array, OSArray *dataArray) {
     char guid_string[37];
     char object_id_string[3];
     OSDictionary *dict = OSDictionary::withCapacity(6);
-    
+
     wmi_data2Str(g->guid, guid_string);
-    
+
     dict->setObject("UUID", OSString::withCString(guid_string));
     if (g->flags & ACPI_WMI_EVENT)
         dict->setObject("notify_value", OSNumber::withNumber(g->notify_id, 8));
-    else
-    {
+    else {
         snprintf(object_id_string, 3, "%c%c", g->object_id[0], g->object_id[1]);
         dict->setObject("object_id", OSString::withCString(object_id_string));
     }
@@ -256,76 +239,63 @@ void AsusFnKeys::wmi_wdg2reg(struct guid_block *g, OSArray *array, OSArray *data
 #endif
     if (g->flags == 0)
         dataArray->setObject(readDataBlock(object_id_string));
-    
-    
+
     array->setObject(dict);
 }
 
-OSDictionary * AsusFnKeys::readDataBlock(char *str)
-{
+OSDictionary * AsusFnKeys::readDataBlock(char *str) {
     OSObject    *wqxx;
     OSData        *data = NULL;
     OSDictionary *dict;
     char name[5];
-    
+
     snprintf(name, 5, "WQ%s", str);
     dict = OSDictionary::withCapacity(1);
-    
-    do
-    {
-        if (atkDevice->evaluateObject(name, &wqxx) != kIOReturnSuccess)
-        {
+
+    do {
+        if (atkDevice->evaluateObject(name, &wqxx) != kIOReturnSuccess) {
             IOLog("%s::No object of method %s\n", getName(), name);
             continue;
         }
-        
-        data = OSDynamicCast(OSData , wqxx);
-        if (data == NULL){
+
+        data = OSDynamicCast(OSData, wqxx);
+        if (data == NULL) {
             IOLog("%s::Cast error %s\n", getName(), name);
             continue;
         }
         dict->setObject(name, data);
-    }
-    while (false);
+    } while (false);
     return dict;
 }
 
-/*
- * Parse the _WDG method for the GUID data blocks
- */
-int AsusFnKeys::parse_wdg(OSDictionary *dict)
-{
+int AsusFnKeys::parse_wdg(OSDictionary *dict) {
     UInt32 i, total;
-    OSObject    *wdg;
-    OSData        *data;
-    OSArray        *array, *dataArray;
-    
-    do
-    {
-        if (atkDevice->evaluateObject("_WDG", &wdg) != kIOReturnSuccess)
-        {
+    OSObject *wdg;
+    OSData *data;
+    OSArray *array, *dataArray;
+
+    do {
+        if (atkDevice->evaluateObject("_WDG", &wdg) != kIOReturnSuccess) {
             IOLog("%s::No object of method _WDG\n", getName());
             continue;
         }
-        
-        data = OSDynamicCast(OSData , wdg);
-        if (data == NULL){
+
+        data = OSDynamicCast(OSData, wdg);
+        if (data == NULL) {
             IOLog("%s::Cast error _WDG\n", getName());
             continue;
         }
         total = data->getLength() / sizeof(struct guid_block);
         array = OSArray::withCapacity(total);
         dataArray = OSArray::withCapacity(1);
-        
-        for (i = 0; i < total; i++) {
+
+        for (i = 0; i < total; i++)
             wmi_wdg2reg((struct guid_block *) data->getBytesNoCopy(i * sizeof(struct guid_block), sizeof(struct guid_block)), array, dataArray);
-        }
         setProperty("WDG", array);
         setProperty("DataBlocks", dataArray);
         data->release();
-    }
-    while (false);
-    
+    } while (false);
+
     return 0;
 }
 
@@ -344,6 +314,7 @@ const FnKeysKeyMap AsusFnKeys::keyMap[] = {
     {0x61, kHIDUsage_AV_TopCase_VideoMirror, ReportType::apple_vendor_top_case_input},
     {0x10, kHIDUsage_AV_TopCase_BrightnessUp, ReportType::apple_vendor_top_case_input},
     {0x20, kHIDUsage_AV_TopCase_BrightnessDown, ReportType::apple_vendor_top_case_input},
+    // Keyboard backlight
     {0xC5, kHIDUsage_AV_TopCase_IlluminationDown, ReportType::apple_vendor_top_case_input},
     {0xC4, kHIDUsage_AV_TopCase_IlluminationUp, ReportType::apple_vendor_top_case_input},
     // Media buttons bound to Asus events keys Down, Left and Right Arrows in full keyboard
@@ -357,215 +328,99 @@ const FnKeysKeyMap AsusFnKeys::keyMap[] = {
     {0,0xFF,ReportType::none}
 };
 
-bool AsusFnKeys::init(OSDictionary *dict)
-{
+bool AsusFnKeys::init(OSDictionary *dict) {
     _notificationServices = OSSet::withCapacity(1);
-    
+
     kev.setVendorID("com.hieplpvip");
     kev.setEventCode(AsusFnKeysEventCode);
-    
+
     bool result = super::init(dict);
     properties = dict;
-    DEBUG_LOG("%s::Init\n", getName());
+    DBGLOG("atk", "Init\n");
     return result;
 }
 
-IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score)
-{
+IOService * AsusFnKeys::probe(IOService *provider, SInt32 *score) {
     IOService * ret = NULL;
     OSObject * obj;
     OSString * name;
     IOACPIPlatformDevice *dev;
-    do
-    {
+    do {
         if (!super::probe(provider, score))
             continue;
-        
+
         dev = OSDynamicCast(IOACPIPlatformDevice, provider);
         if (NULL == dev)
             continue;
-        
+
         dev->evaluateObject("_UID", &obj);
-        
+
         name = OSDynamicCast(OSString, obj);
         if (NULL == name)
             continue;
-        
-        if (name->isEqualTo("ATK"))
-        {
+
+        if (name->isEqualTo("ATK")) {
             *score +=20;
             ret = this;
         }
         name->release();
-    }
-    while (false);
-    
+    } while (false);
+
     return (ret);
 }
 
-bool AsusFnKeys::start(IOService *provider)
-{
-    if(!provider || !super::start( provider ))
-    {
+bool AsusFnKeys::start(IOService *provider) {
+    if (!provider || !super::start(provider)) {
         IOLog("%s::Error loading kext\n", getName());
         return false;
     }
-    
+
     atkDevice = (IOACPIPlatformDevice *) provider;
-    
+    atkDevice->evaluateObject("INIT", NULL, NULL, NULL);
+
     IOLog("%s::Found WMI Device %s\n", getName(), atkDevice->getName());
-    
+
     parse_wdg(properties);
-    
+
     checkKBALS();
-    
-    enableEvent();
-    
+
+    initVirtualKeyboard();
+
+    registerNotifications();
+
+    registerVSMC();
+
     PMinit();
     registerPowerDriver(this, powerStateArray, kAsusFnKeysIOPMNumberPowerStates);
     provider->joinPMtree(this);
-    
+
     this->registerService(0);
-    
-    OSDictionary * propertyMatch = propertyMatching(OSSymbol::withCString(kDeliverNotifications), OSBoolean::withBoolean(true));
-    
-    IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &AsusFnKeys::notificationHandler);
-    
-    //
-    // Register notifications for availability of any IOService objects wanting to consume our message events
-    //
-    _publishNotify = addMatchingNotification(gIOFirstPublishNotification,
-                                             propertyMatch,
-                                             notificationHandler,
-                                             this,
-                                             0, 10000);
-    
-    _terminateNotify = addMatchingNotification(gIOTerminatedNotification,
-                                               propertyMatch,
-                                               notificationHandler,
-                                               this,
-                                               0, 10000);
-    
-    propertyMatch->release();
-    
+
     workloop = getWorkLoop();
-    if (!workloop){
-        DEBUG_LOG("%s::Failed to get workloop!\n", getName());
+    if (!workloop) {
+        DBGLOG("atk", "Failed to get workloop!\n");
         return false;
     }
     workloop->retain();
-    
+
     command_gate = IOCommandGate::commandGate(this);
-    if (!command_gate) {
+    if (!command_gate)
         return false;
-    }
+
     workloop->addEventSource(command_gate);
-    
-    vsmcNotifier = VirtualSMCAPI::registerHandler(vsmcNotificationHandler, this);
-    
-    ALSSensor sensor {ALSSensor::Type::Unknown7, true, 6, false};
-    ALSSensor noSensor {ALSSensor::Type::NoSensor, false, 0, false};
-    SMCALSValue::Value emptyValue;
-    SMCKBrdBLightValue::lkb lkb;
-    SMCKBrdBLightValue::lks lks;
-    
-    VirtualSMCAPI::addKey(KeyAL, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(0, &forceBits, SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE));
-    
-    VirtualSMCAPI::addKey(KeyALI0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&sensor), sizeof(sensor), SmcKeyTypeAli, nullptr,
-        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    VirtualSMCAPI::addKey(KeyALI1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&noSensor), sizeof(noSensor), SmcKeyTypeAli, nullptr,
-        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    
-    VirtualSMCAPI::addKey(KeyALRV, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(1, nullptr, SMC_KEY_ATTRIBUTE_READ));
-    
-    VirtualSMCAPI::addKey(KeyALV0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, new SMCALSValue(&currentLux, &forceBits),
-        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    VirtualSMCAPI::addKey(KeyALV1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, nullptr,
-        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    VirtualSMCAPI::addKey(KeyLKSB, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&lkb), sizeof(lkb), SmcKeyTypeLkb, new SMCKBrdBLightValue(atkDevice),
-        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    VirtualSMCAPI::addKey(KeyLKSS, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
-        reinterpret_cast<const SMC_DATA *>(&lks), sizeof(lks), SmcKeyTypeLks, nullptr,
-        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
-    VirtualSMCAPI::addKey(KeyMSLD, vsmcPlugin.data, VirtualSMCAPI::valueWithUint8(0, nullptr,
-        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
-    
+
+    setProperty("TouchpadEnabled", true);
+
+    setProperty("Copyright", "Copyright © 2018 hieplpvip. Credits: EMlyDinEsH(OSXLatitude)");
+
+    IOLog("%s::Asus Fn Hotkey Events Enabled\n", getName());
+
     return true;
 }
 
-bool AsusFnKeys::vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier) {
-    if (sensors && vsmc) {
-        DBGLOG("asld", "got vsmc notification");
-        auto self = static_cast<AsusFnKeys *>(sensors);
-        auto ret = vsmc->callPlatformFunction(VirtualSMCAPI::SubmitPlugin, true, sensors, &self->vsmcPlugin, nullptr, nullptr);
-        if (ret == kIOReturnSuccess) {
-            DBGLOG("asld", "submitted plugin");
-            
-            self->workloop = self->getWorkLoop();
-            self->poller = IOTimerEventSource::timerEventSource(self, [](OSObject *object, IOTimerEventSource *sender) {
-                auto ls = OSDynamicCast(AsusFnKeys, object);
-                if (ls) ls->refreshSensor(true);
-            });
-            
-            if (!self->poller || !self->workloop) {
-                SYSLOG("asld", "failed to create poller or workloop");
-                return false;
-            }
-            
-            if (self->workloop->addEventSource(self->poller) != kIOReturnSuccess) {
-                SYSLOG("asld", "failed to add timer event source to workloop");
-                return false;
-            }
-            
-            if (self->poller->setTimeoutMS(SensorUpdateTimeoutMS) != kIOReturnSuccess) {
-                SYSLOG("asld", "failed to set timeout");
-                return false;
-            }
-            
-            return true;
-        } else if (ret != kIOReturnUnsupported) {
-            SYSLOG("asld", "plugin submission failure %X", ret);
-        } else {
-            DBGLOG("asld", "plugin submission to non vsmc");
-        }
-    } else {
-        SYSLOG("asld", "got null vsmc notification");
-    }
-    
-    return false;
-}
+void AsusFnKeys::stop(IOService *provider) {
+    DBGLOG("atk", "Stop\n");
 
-bool AsusFnKeys::refreshSensor(bool post) {
-    uint32_t lux = 0;
-    auto ret = atkDevice->evaluateInteger("ALSS", &lux);
-    if (ret != kIOReturnSuccess)
-        lux = 0xFFFFFFFF; // ACPI invalid
-    
-    atomic_store_explicit(&currentLux, lux, memory_order_release);
-    
-    if (post) {
-        VirtualSMCAPI::postInterrupt(SmcEventALSChange);
-        poller->setTimeoutMS(SensorUpdateTimeoutMS);
-    }
-    
-    return ret == kIOReturnSuccess;
-}
-
-void AsusFnKeys::stop(IOService *provider)
-{
-    DEBUG_LOG("%s::Stop\n", getName());
-    
     if (poller)
         poller->cancelTimeout();
     if (workloop && poller)
@@ -575,36 +430,32 @@ void AsusFnKeys::stop(IOService *provider)
     OSSafeReleaseNULL(workloop);
     OSSafeReleaseNULL(poller);
     OSSafeReleaseNULL(command_gate);
-    
+
     _publishNotify->remove();
     _terminateNotify->remove();
     _notificationServices->flushCollection();
     OSSafeReleaseNULL(_publishNotify);
     OSSafeReleaseNULL(_terminateNotify);
     OSSafeReleaseNULL(_notificationServices);
-    
-    disableEvent();
+
+    OSSafeReleaseNULL(_virtualKBrd);
     PMstop();
-    
+
     super::stop(provider);
     return;
 }
 
-IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *whatDevice)
-{
+IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *whatDevice) {
     if (whatDevice != this)
         return IOPMAckImplied;
-    
+
     if (!powerStateOrdinal)
-    {
-        DEBUG_LOG("%s::Going to sleep\n", getName());
-    }
-    else
-    {
-        DEBUG_LOG("%s::Woke up from sleep\n", getName());
+        DBGLOG("atk", "Going to sleep\n");
+    else {
+        DBGLOG("atk", "Woke up from sleep\n");
         IOSleep(1000);
     }
-    
+
     return IOPMAckImplied;
 }
 
@@ -612,448 +463,335 @@ IOReturn AsusFnKeys::setPowerState(unsigned long powerStateOrdinal, IOService *w
 #pragma mark AsusFnKeys Methods
 #pragma mark -
 
-void AsusFnKeys::checkKBALS()
-{
-    // Detect keyboard backlight support
-    if (atkDevice->validateObject("SKBL") == kIOReturnSuccess && atkDevice->validateObject("GKBL") == kIOReturnSuccess)
-    {
-        hasKeybrdBLight = true;
-    }
-    else
-    {
-        hasKeybrdBLight = false;
-        DEBUG_LOG("%s::Keyboard backlight is not supported\n", getName());
-    }
-    
-    // Detect ALS sensor
-    if (atkDevice->validateObject("ALSC") == kIOReturnSuccess && atkDevice->validateObject("ALSS") == kIOReturnSuccess)
-    {
-        hasALSensor = true;
-        IOLog("%s::Found ALS sensor\n", getName());
-    }
-    else
-    {
-        hasALSensor = false;
-        DEBUG_LOG("%s::No ALS sensors were found\n", getName());
-    }
-}
-
-IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument)
-{
-    if (type == kIOACPIMessageDeviceNotification)
-    {
+IOReturn AsusFnKeys::message(UInt32 type, IOService * provider, void * argument) {
+    if (type == kIOACPIMessageDeviceNotification) {
         UInt32 event = *((UInt32 *) argument);
         OSObject * wed;
-        
+
         OSNumber * number = OSNumber::withNumber(event,32);
         atkDevice->evaluateObject("_WED", &wed, (OSObject**)&number,1);
         number->release();
         number = OSDynamicCast(OSNumber, wed);
-        if (NULL == number)
-        {
+        if (NULL == number) {
             // try a package
             OSArray * array = OSDynamicCast(OSArray, wed);
-            if (NULL == array)
-            {
+            if (NULL == array) {
                 // try a buffer
                 OSData * data = OSDynamicCast(OSData, wed);
-                if ( (NULL == data) || (data->getLength() == 0))
-                {
-                    DEBUG_LOG("%s::Fail to cast _WED returned objet %s\n", getName(), wed->getMetaClass()->getClassName());
+                if ((NULL == data) || (data->getLength() == 0)) {
+                    DBGLOG("atk", "Fail to cast _WED returned objet %s\n", wed->getMetaClass()->getClassName());
                     return kIOReturnError;
                 }
                 const char * bytes = (const char *) data->getBytesNoCopy();
                 number = OSNumber::withNumber(bytes[0],32);
-            }
-            else
-            {
+            } else {
                 number = OSDynamicCast(OSNumber, array->getObject(0));
-                if (NULL == number)
-                {
-                    DEBUG_LOG("%s::Fail to cast _WED returned 1st objet in array %s\n", getName(), array->getObject(0)->getMetaClass()->getClassName());
+                if (NULL == number) {
+                    DBGLOG("atk", "Fail to cast _WED returned 1st objet in array %s\n", array->getObject(0)->getMetaClass()->getClassName());
                     return kIOReturnError;
                 }
             }
         }
-        
+
         handleMessage(number->unsigned32BitValue());
     }
     else
-    {
-        DEBUG_LOG("%s::Unexpected message: %u Type %x Provider %s \n", getName(), *((UInt32 *) argument), uint(type), provider->getName());
-    }
-    
+        DBGLOG("atk", "Unexpected message: %u Type %x Provider %s \n", *((UInt32 *) argument), uint(type), provider->getName());
+
     return kIOReturnSuccess;
 }
 
-void AsusFnKeys::handleMessage(int code)
-{
+void AsusFnKeys::handleMessage(int code) {
     int loopCount = 0;
-    
+
     // Processing the code
     switch (code) {
         case 0x57: // AC disconnected
         case 0x58: // AC connected
             // ignore silently
             break;
-            
+
         // Backlight
         case 0x33:// hardwired On
         case 0x34:// hardwired Off
         case 0x35:// Soft Event, Fn + F7
-            if(isPanelBackLightOn)
-            {
+            if (isPanelBackLightOn) {
                 code = NOTIFY_BRIGHTNESS_DOWN_MIN;
                 loopCount = 16;
-                
+
                 // Read Panel brigthness value to restore later with backlight toggle
                 readPanelBrightnessValue();
-            }
-            else
-            {
+            } else {
                 code = NOTIFY_BRIGHTNESS_UP_MIN;
                 loopCount = panelBrightnessLevel;
             }
-            
+
             isPanelBackLightOn = !isPanelBackLightOn;
             break;
-            
+
         case 0x6B: // Fn + F9, Touchpad On/Off
             touchpadEnabled = !touchpadEnabled;
-            if(touchpadEnabled)
-            {
+            if (touchpadEnabled) {
                 setProperty("TouchpadEnabled", true);
                 removeProperty("TouchpadDisabled");
-                DEBUG_LOG("%s::Touchpad Enabled\n", getName());
-            }
-            else
-            {
+                DBGLOG("atk", "Touchpad Enabled\n");
+            } else {
                 removeProperty("TouchpadEnabled");
                 setProperty("TouchpadDisabled", true);
-                DEBUG_LOG("%s::Touchpad Disabled\n", getName());
+                DBGLOG("atk", "Touchpad Disabled\n");
             }
-            
-            // send to 3rd party drivers
+
             dispatchMessage(kKeyboardSetTouchStatus, &touchpadEnabled);
             break;
-            
+
         case 0x5E:
             kev.sendMessage(kevSleep, 0, 0);
             break;
-            
+
         case 0x7A: // Fn + A, ALS Sensor
-            if(hasALSensor)
-            {
+            if (hasALSensor) {
                 isALSenabled = !isALSenabled;
-                enableALS(isALSenabled);
+                toggleALS(isALSenabled);
             }
             break;
-            
+
         case 0x7D: // Airplane mode
             kev.sendMessage(kevAirplaneMode, 0, 0);
             break;
-            
+
         case 0xC6:
         case 0xC7: // ALS Notifcations
-            if(hasALSensor)
-            {
+            if (hasALSensor) {
                 UInt32 alsValue = 0;
                 atkDevice->evaluateInteger("ALSS", &alsValue, NULL, NULL);
-                DEBUG_LOG("%s::ALS %d\n", getName(), alsValue);
+                DBGLOG("atk", "ALS %d\n", alsValue);
             }
             break;
-            
+
         case 0xC5: // Fn + F3, Decrease Keyboard Backlight
         case 0xC4: // Fn + F4, Increase Keyboard Backlight
-            if(!hasKeybrdBLight) code = 0;
+            if (!hasKeybrdBLight) code = 0;
             break;
-            
+
         default:
-            if(code >= NOTIFY_BRIGHTNESS_DOWN_MIN && code<= NOTIFY_BRIGHTNESS_DOWN_MAX)
-            {
+            if (code >= NOTIFY_BRIGHTNESS_DOWN_MIN && code<= NOTIFY_BRIGHTNESS_DOWN_MAX) {
                 // Fn + F5, Panel Brightness Down
                 code = NOTIFY_BRIGHTNESS_DOWN_MIN;
-                
-                if(panelBrightnessLevel > 0)
+
+                if (panelBrightnessLevel > 0)
                     panelBrightnessLevel--;
-            }
-            else if(code >= NOTIFY_BRIGHTNESS_UP_MIN && code<= NOTIFY_BRIGHTNESS_UP_MAX)
-            {
+            } else if (code >= NOTIFY_BRIGHTNESS_UP_MIN && code<= NOTIFY_BRIGHTNESS_UP_MAX) {
                 // Fn + F6, Panel Brightness Up
                 code = NOTIFY_BRIGHTNESS_UP_MIN;
-                
+
                 panelBrightnessLevel++;
-                if(panelBrightnessLevel>16)
+                if (panelBrightnessLevel>16)
                     panelBrightnessLevel = 16;
             }
             break;
     }
-    
-    DEBUG_LOG("%s::Received Key %d(0x%x)\n", getName(), code, code);
-    
+
+    DBGLOG("atk", "Received Key %d(0x%x)\n", code, code);
+
     // Sending the code for the keyboard handler
     processFnKeyEvents(code, loopCount);
 }
 
-IOReturn AsusFnKeys::postKeyboardInputReport(const void* report, uint32_t reportSize)
-{
-    IOReturn result = kIOReturnError;
-    
-    if (!report || reportSize == 0) {
-        return kIOReturnBadArgument;
-    }
-    
-    if (_virtualKBrd) {
-        if (auto buffer = IOBufferMemoryDescriptor::withBytes(report, reportSize, kIODirectionNone)) {
-            result = _virtualKBrd->handleReport(buffer, kIOHIDReportTypeInput, kIOHIDOptionsTypeNone);
-            buffer->release();
-        }
-    }
-    
-    return result;
-}
-
-IOReturn AsusFnKeys::resetVirtualHIDKeyboard() {
-    bool result = kIOReturnSuccess;
-    
-    if (_virtualKBrd) {
-        {
-            karabiner_virtual_hid_device::hid_report::keyboard_input report;
-            auto kr = postKeyboardInputReport(&report, sizeof(report));
-            if (kr != kIOReturnSuccess) {
-                result = kIOReturnError;
-            }
-        }
-        {
-            karabiner_virtual_hid_device::hid_report::consumer_input report;
-            auto kr = postKeyboardInputReport(&report, sizeof(report));
-            if (kr != kIOReturnSuccess) {
-                result = kIOReturnError;
-            }
-        }
-        {
-            karabiner_virtual_hid_device::hid_report::apple_vendor_top_case_input report;
-            auto kr = postKeyboardInputReport(&report, sizeof(report));
-            if (kr != kIOReturnSuccess) {
-                result = kIOReturnError;
-            }
-        }
-        {
-            karabiner_virtual_hid_device::hid_report::apple_vendor_keyboard_input report;
-            auto kr = postKeyboardInputReport(&report, sizeof(report));
-            if (kr != kIOReturnSuccess) {
-                result = kIOReturnError;
-            }
-        }
-    }
-    
-    return result;
-}
-
-void AsusFnKeys::processFnKeyEvents(int code, int bLoopCount)
-{
+void AsusFnKeys::processFnKeyEvents(int code, int bLoopCount) {
+    // TO-DO: rewrite this
     int i = 0, out;
     ReportType type;
-    do
-    {
-        if (keyMap[i].type == ReportType::none && keyMap[i].in == 0 && keyMap[i].out == 0xFF)
-        {
-            DEBUG_LOG("%s::Unknown key %02X i=%d\n", getName(), code, i);
+    do {
+        if (keyMap[i].type == ReportType::none && keyMap[i].in == 0 && keyMap[i].out == 0xFF) {
+            DBGLOG("atk", "Unknown key %02X i=%d\n", code, i);
             return;
         }
-        if (keyMap[i].in == code)
-        {
-            DEBUG_LOG("%s::Key Pressed %02X i=%d\n", getName(), code, i);
+        if (keyMap[i].in == code) {
+            DBGLOG("atk", "Key Pressed %02X i=%d\n", code, i);
             out = keyMap[i].out;
             type = keyMap[i].type;
             break;
         }
         i++;
     } while (true);
-    
-    if(type == ReportType::keyboard_input)
-    {
-        karabiner_virtual_hid_device::hid_report::keyboard_input report;
-        report.keys.insert(out);
-        if(bLoopCount>0)
-        {
-            while(bLoopCount--)
-            {
-                postKeyboardInputReport(&report, sizeof(report));
-                resetVirtualHIDKeyboard();
+
+    if (type == ReportType::keyboard_input) {
+        if (bLoopCount > 0) {
+            while (bLoopCount--) {
+                kbreport.keys.insert(out);
+                postKeyboardInputReport(&kbreport, sizeof(kbreport));
+                kbreport.keys.erase(out);
+                postKeyboardInputReport(&kbreport, sizeof(kbreport));
             }
-            DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
-        }
-        else
-        {
-            postKeyboardInputReport(&report, sizeof(report));
-            resetVirtualHIDKeyboard();
-            DEBUG_LOG("%s::Dispatch Key %d(0x%x)\n", getName(), code, code);
+            DBGLOG("atk", "Loop Count %d, Dispatch Key %d(0x%x)\n", bLoopCount, code, code);
+        } else {
+            kbreport.keys.insert(out);
+            postKeyboardInputReport(&kbreport, sizeof(kbreport));
+            kbreport.keys.erase(out);
+            postKeyboardInputReport(&kbreport, sizeof(kbreport));
+            DBGLOG("atk", "Dispatch Key %d(0x%x)\n", code, code);
         }
     }
-    
-    else if(type == ReportType::apple_vendor_top_case_input)
-    {
-        karabiner_virtual_hid_device::hid_report::apple_vendor_top_case_input report;
-        report.keys.insert(out);
-        if(bLoopCount>0)
-        {
-            while(bLoopCount--)
-            {
-                postKeyboardInputReport(&report, sizeof(report));
-                resetVirtualHIDKeyboard();
+
+    else if (type == ReportType::apple_vendor_top_case_input) {
+        if (bLoopCount > 0) {
+            while (bLoopCount--) {
+                tcreport.keys.insert(out);
+                postKeyboardInputReport(&tcreport, sizeof(tcreport));
+                tcreport.keys.erase(out);
+                postKeyboardInputReport(&tcreport, sizeof(tcreport));
             }
-            DEBUG_LOG("%s::Loop Count %d, Dispatch Key %d(0x%x)\n", getName(), bLoopCount, code, code);
-        }
-        else
-        {
-            postKeyboardInputReport(&report, sizeof(report));
-            resetVirtualHIDKeyboard();
-            DEBUG_LOG("%s::Dispatch Key %d(0x%x)\n", getName(), code, code);
+            DBGLOG("atk", "Loop Count %d, Dispatch Key %d(0x%x)\n", bLoopCount, code, code);
+        } else {
+            tcreport.keys.insert(out);
+            postKeyboardInputReport(&tcreport, sizeof(tcreport));
+            tcreport.keys.erase(out);
+            postKeyboardInputReport(&tcreport, sizeof(tcreport));
+            DBGLOG("atk", "Dispatch Key %d(0x%x)\n", code, code);
         }
     }
 }
 
-void AsusFnKeys::enableALS(bool state)
-{
+void AsusFnKeys::checkKBALS() {
+    // Check keyboard backlight support
+    if (atkDevice->validateObject("SKBV") == kIOReturnSuccess)
+        hasKeybrdBLight = true;
+    else {
+        hasKeybrdBLight = false;
+        DBGLOG("atk", "Keyboard backlight is not supported\n");
+    }
+
+    // Check ALS sensor
+    if (atkDevice->validateObject("ALSC") == kIOReturnSuccess && atkDevice->validateObject("ALSS") == kIOReturnSuccess) {
+        IOLog("%s::Found ALS sensor\n", getName());
+        hasALSensor = isALSenabled = true;
+        toggleALS(isALSenabled);
+        IOLog("%s::ALS turned on at boot\n", getName());
+    } else {
+        hasALSensor = false;
+        DBGLOG("atk", "No ALS sensors were found\n");
+    }
+}
+
+void AsusFnKeys::toggleALS(bool state) {
     OSObject * params[1];
     UInt32 res;
     params[0] = OSNumber::withNumber(state, 8);
-    
-    if(atkDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
-        DEBUG_LOG("%s::ALS %s %d\n", getName(), state ? "enabled" : "disabled", res);
+
+    if (atkDevice->evaluateInteger("ALSC", &res, params, 1) == kIOReturnSuccess)
+        DBGLOG("atk", "ALS %s %d\n", state ? "enabled" : "disabled", res);
     else
-        DEBUG_LOG("%s::Failed to call ALSC\n", getName());
+        DBGLOG("atk", "Failed to call ALSC\n");
 }
 
-int AsusFnKeys::checkBacklightEntry()
-{
-    if(IORegistryEntry::fromPath(backlightEntry))
+int AsusFnKeys::checkBacklightEntry() {
+    if (IORegistryEntry::fromPath(backlightEntry))
         return 1;
-    else
-    {
-        DEBUG_LOG("%s::Failed to find backlight entry for %s\n", getName(), backlightEntry);
+    else {
+        DBGLOG("atk", "Failed to find backlight entry for %s\n", backlightEntry);
         return 0;
     }
 }
 
-int AsusFnKeys::findBacklightEntry()
-{
+int AsusFnKeys::findBacklightEntry() {
     snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/GFX0@2/AppleIntelFramebuffer@0/display0/AppleBacklightDisplay");
-    if(checkBacklightEntry())
+    if (checkBacklightEntry())
         return 1;
-    
+
     snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/IGPU@2/AppleIntelFramebuffer@0/display0/AppleBacklightDisplay");
     if (checkBacklightEntry())
         return 1;
-    
+
     char deviceName[5][5] = {"PEG0", "PEGP", "PEGR", "P0P2", "IXVE"};
-    for (int i = 0; i < 5; i++)
-    {
+    for (int i = 0; i < 5; i++) {
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@1/IOPP/GFX0@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDA/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
-        
+
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@3/IOPP/GFX0@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDATesla/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
-        
+
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@10/IOPP/GFX0@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDATesla/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
-        
+
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@1/IOPP/display@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDA/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
-        
+
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@3/IOPP/display@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDATesla/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
-        
+
         snprintf(backlightEntry, 1000, "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/%s@10/IOPP/display@0", deviceName[i]);
         snprintf(backlightEntry, 1000, "%s%s", backlightEntry, "/NVDA,Display-A@0/NVDATesla/display0/AppleBacklightDisplay");
         if (checkBacklightEntry())
             return 1;
     }
-    
+
     return 0;
 }
 
-void AsusFnKeys::readPanelBrightnessValue()
-{
-    //
-    //Reading AppleBezel Values from Apple Backlight Panel driver for controlling the bezel levels
-    //
-    
-    if(!findBacklightEntry())
-    {
-        DEBUG_LOG("%s::GPU device not found\n", getName());
+void AsusFnKeys::readPanelBrightnessValue() {
+    if (!findBacklightEntry()) {
+        DBGLOG("atk", "GPU device not found\n");
         return;
     }
-    
+
     IORegistryEntry *displayDeviceEntry = IORegistryEntry::fromPath(backlightEntry);
-    
+
     if (displayDeviceEntry != NULL) {
-        if(OSDictionary* ioDisplayParaDict = OSDynamicCast(OSDictionary, displayDeviceEntry->getProperty("IODisplayParameters")))
-        {
-            if(OSDictionary* brightnessDict = OSDynamicCast(OSDictionary, ioDisplayParaDict->getObject("brightness")))
-            {
-                if (OSNumber* brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject("value")))
-                {
+        if (OSDictionary* ioDisplayParaDict = OSDynamicCast(OSDictionary, displayDeviceEntry->getProperty("IODisplayParameters"))) {
+            if (OSDictionary* brightnessDict = OSDynamicCast(OSDictionary, ioDisplayParaDict->getObject("brightness"))) {
+                if (OSNumber* brightnessValue = OSDynamicCast(OSNumber, brightnessDict->getObject("value"))) {
                     panelBrightnessLevel = brightnessValue->unsigned32BitValue()/64;
-                    DEBUG_LOG("%s::Panel brightness level from AppleBacklightDisplay: %d\n", getName(), brightnessValue->unsigned32BitValue());
-                    DEBUG_LOG("%s::Read panel brightness level: %d\n", getName(), panelBrightnessLevel);
-                }
-                else
-                    DEBUG_LOG("%s::Can't not read brightness value\n", getName());
-            }
-            else
-                DEBUG_LOG("%s::Can't not find dictionary brightness\n", getName());
-        }
-        else
-            DEBUG_LOG("%s::Can't not find dictionary IODisplayParameters\n", getName());
+                    DBGLOG("atk", "Panel brightness level from AppleBacklightDisplay: %d\n", brightnessValue->unsigned32BitValue());
+                    DBGLOG("atk", "Read panel brightness level: %d\n", panelBrightnessLevel);
+                } else
+                    DBGLOG("atk", "Can't not read brightness value\n");
+            } else
+                DBGLOG("atk", "Can't not find dictionary brightness\n");
+        } else
+            DBGLOG("atk", "Can't not find dictionary IODisplayParameters\n");
     }
 }
 
-void AsusFnKeys::getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status)
-{
-    DEBUG_LOG("%s::getDeviceStatus()\n", getName());
-    
+void AsusFnKeys::getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status) {
+    DBGLOG("atk", "getDeviceStatus()\n");
+
     char method[5];
     OSObject * params[3];
     OSString *str;
     OSDictionary *dict = getDictByUUID(guid);
     if (NULL == dict)
         return;
-    
+
     str = OSDynamicCast(OSString, dict->getObject("object_id"));
     if (NULL == str)
         return;
-    
+
     snprintf(method, 5, "WM%s", str->getCStringNoCopy());
-    
+
     params[0] = OSNumber::withNumber(0x00D,32);
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSNumber::withNumber(deviceId,32);
-    
+
     atkDevice->evaluateInteger(method, status, params, 3);
-    
+
     params[0]->release();
     params[1]->release();
     params[2]->release();
-    
-    return;
 }
 
-void AsusFnKeys::setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status)
-{
-    DEBUG_LOG("%s::setDeviceStatus()\n", getName());
-    
+void AsusFnKeys::setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status) {
+    DBGLOG("atk", "setDeviceStatus()\n");
+
     char method[5];
     char buffer[8];
     OSObject * params[3];
@@ -1061,36 +799,33 @@ void AsusFnKeys::setDeviceStatus(const char * guid, UInt32 methodId, UInt32 devi
     OSDictionary *dict = getDictByUUID(guid);
     if (NULL == dict)
         return;
-    
+
     str = OSDynamicCast(OSString, dict->getObject("object_id"));
     if (NULL == str)
         return;
-    
+
     snprintf(method, 5, "WM%s", str->getCStringNoCopy());
-    
+
     lilu_os_memcpy(buffer, &deviceId, 4);
     lilu_os_memcpy(buffer+4, status, 4);
-    
+
     params[0] = OSNumber::withNumber(0x00D,32);
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSData::withBytes(buffer, 8);
-    
+
     *status = ~0;
     atkDevice->evaluateInteger(method, status, params, 3);
-    
-    DEBUG_LOG("%s::setDeviceStatus Res = %x\n", getName(), (unsigned int)*status);
-    
+
+    DBGLOG("atk", "setDeviceStatus Res = %x\n", (unsigned int)*status);
+
     params[0]->release();
     params[1]->release();
     params[2]->release();
-    
-    return;
 }
 
-void AsusFnKeys::setDevice(const char * guid, UInt32 methodId, UInt32 *status)
-{
-    DEBUG_LOG("%s::setDevice(%d)\n", getName(), (int)*status);
-    
+void AsusFnKeys::setDevice(const char * guid, UInt32 methodId, UInt32 *status) {
+    DBGLOG("atk", "setDevice(%d)\n", (int)*status);
+
     char method[5];
     char buffer[4];
     OSObject * params[3];
@@ -1098,152 +833,242 @@ void AsusFnKeys::setDevice(const char * guid, UInt32 methodId, UInt32 *status)
     OSDictionary *dict = getDictByUUID(guid);
     if (NULL == dict)
         return;
-    
+
     str = OSDynamicCast(OSString, dict->getObject("object_id"));
     if (NULL == str)
         return;
-    
+
     snprintf(method, 5, "WM%s", str->getCStringNoCopy());
-    
+
     lilu_os_memcpy(buffer, status, 4);
-    
+
     params[0] = OSNumber::withNumber(0x00D,32);
     params[1] = OSNumber::withNumber(methodId,32);
     params[2] = OSData::withBytes(buffer, 8);
-    
+
     *status = ~0;
     atkDevice->evaluateInteger(method, status, params, 3);
-    
-    DEBUG_LOG("%s::setDevice Res = %x\n", getName(), (unsigned int)*status);
-    
+
+    DBGLOG("atk", "setDevice Res = %x\n", (unsigned int)*status);
+
     params[0]->release();
     params[1]->release();
     params[2]->release();
-    
+
     return;
 }
 
-
-OSDictionary* AsusFnKeys::getDictByUUID(const char * guid)
-{
+OSDictionary* AsusFnKeys::getDictByUUID(const char * guid) {
     UInt32 i;
     OSDictionary *dict = NULL;
     OSString *uuid;
     OSArray *array = OSDynamicCast(OSArray, properties->getObject("WDG"));
     if (NULL == array)
         return NULL;
-    for (i=0; i<array->getCount(); i++) {
+    for (i = 0; i < array->getCount(); i++) {
         dict = OSDynamicCast(OSDictionary, array->getObject(i));
         uuid = OSDynamicCast(OSString, dict->getObject("UUID"));
-        if (uuid->isEqualTo(guid)){
+        if (uuid->isEqualTo(guid)) {
             break;
         }
-        
     }
     return dict;
 }
 
+#pragma mark -
+#pragma mark VirtualKeyboard
+#pragma mark -
 
-IOReturn AsusFnKeys::enableFnKeyEvents(const char * guid, UInt32 methodId)
-{
-    //Asus WMI Specific Method Inside the DSDT
-    //Calling the Asus Method INIT from the DSDT to enable the Hotkey Events
-    atkDevice->evaluateObject("INIT", NULL, NULL, NULL);
-    
-    return kIOReturnSuccess;
+void AsusFnKeys::initVirtualKeyboard() {
+    _virtualKBrd = new VirtualHIDKeyboard;
+
+    if (!_virtualKBrd || !_virtualKBrd->init() || !_virtualKBrd->attach(this) || !_virtualKBrd->start(this)) {
+        _virtualKBrd->release();
+        IOLog("%s::Error VirtualHIDKeyboard\n", getName());
+    } else
+        _virtualKBrd->setCountryCode(0);
 }
 
+IOReturn AsusFnKeys::postKeyboardInputReport(const void* report, uint32_t reportSize) {
+    IOReturn result = kIOReturnError;
 
+    if (!report || reportSize == 0) {
+        return kIOReturnBadArgument;
+    }
 
-#pragma mark -
-#pragma mark Event handling methods
-#pragma mark -
-
-void AsusFnKeys::enableEvent()
-{
-    if (enableFnKeyEvents(ASUS_WMI_MGMT_GUID, ASUS_WMI_METHODID_INIT) != kIOReturnSuccess)
-        IOLog("Unable to enable events!!!\n");
-    else
-    {
-        _virtualKBrd = new VirtualHIDKeyboard;
-        
-        if(!_virtualKBrd               ||
-           !_virtualKBrd->init()       ||
-           !_virtualKBrd->attach(this) ||
-           !_virtualKBrd->start(this)  )
-        {
-            _virtualKBrd->release();
-            IOLog("%s::Error VirtualHIDKeyboard\n", getName());
-        }
-        else
-        {
-            _virtualKBrd->setCountryCode(0);
-            
-            // Setting Touchpad state on startup
-            setProperty("TouchpadEnabled", true);
-            
-            if(hasALSensor)
-            {
-                isALSenabled = true;
-                enableALS(isALSenabled);
-                IOLog("%s::ALS turned on at boot\n", getName());
-            }
-            
-            IOLog("%s::Asus Fn Hotkey Events Enabled\n", getName());
+    if (_virtualKBrd) {
+        if (auto buffer = IOBufferMemoryDescriptor::withBytes(report, reportSize, kIODirectionNone)) {
+            result = _virtualKBrd->handleReport(buffer, kIOHIDReportTypeInput, kIOHIDOptionsTypeNone);
+            buffer->release();
         }
     }
-}
 
-void AsusFnKeys::disableEvent()
-{
-    OSSafeReleaseNULL(_virtualKBrd);
+    return result;
 }
 
 #pragma mark -
 #pragma mark Notification methods
 #pragma mark -
 
-void AsusFnKeys::notificationHandlerGated(IOService * newService, IONotifier * notifier)
-{
+void AsusFnKeys::registerNotifications() {
+    OSDictionary * propertyMatch = propertyMatching(OSSymbol::withCString(kDeliverNotifications), OSBoolean::withBoolean(true));
+
+    IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &AsusFnKeys::notificationHandler);
+
+    _publishNotify = addMatchingNotification(gIOFirstPublishNotification,
+                                             propertyMatch,
+                                             notificationHandler,
+                                             this,
+                                             0, 10000);
+
+    _terminateNotify = addMatchingNotification(gIOTerminatedNotification,
+                                               propertyMatch,
+                                               notificationHandler,
+                                               this,
+                                               0, 10000);
+
+    propertyMatch->release();
+}
+
+void AsusFnKeys::notificationHandlerGated(IOService * newService, IONotifier * notifier) {
     if (notifier == _publishNotify) {
         IOLog("%s::Notification consumer published: %s\n", getName(), newService->getName());
         _notificationServices->setObject(newService);
     }
-    
+
     if (notifier == _terminateNotify) {
         IOLog("%s::Notification consumer terminated: %s\n", getName(), newService->getName());
         _notificationServices->removeObject(newService);
     }
 }
 
-bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier)
-{
+bool AsusFnKeys::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier) {
     command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &AsusFnKeys::notificationHandlerGated), newService, notifier);
     return true;
 }
 
-void AsusFnKeys::dispatchMessageGated(int* message, void* data)
-{
+void AsusFnKeys::dispatchMessageGated(int* message, void* data) {
     OSCollectionIterator* i = OSCollectionIterator::withCollection(_notificationServices);
-    
+
     if (i != NULL) {
-        while (IOService* service = OSDynamicCast(IOService, i->getNextObject()))  {
+        while (IOService* service = OSDynamicCast(IOService, i->getNextObject()))
             service->message(*message, this, data);
-        }
         i->release();
     }
 }
 
-void AsusFnKeys::dispatchMessage(int message, void* data)
-{
+void AsusFnKeys::dispatchMessage(int message, void* data) {
     command_gate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &AsusFnKeys::dispatchMessageGated), &message, data);
+}
+
+#pragma mark -
+#pragma mark VirtualSMC plugin
+#pragma mark -
+
+void AsusFnKeys::registerVSMC() {
+    vsmcNotifier = VirtualSMCAPI::registerHandler(vsmcNotificationHandler, this);
+
+    ALSSensor sensor {ALSSensor::Type::Unknown7, true, 6, false};
+    ALSSensor noSensor {ALSSensor::Type::NoSensor, false, 0, false};
+    SMCALSValue::Value emptyValue;
+    SMCKBrdBLightValue::lkb lkb;
+    SMCKBrdBLightValue::lks lks;
+
+    VirtualSMCAPI::addKey(KeyAL, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(0, &forceBits, SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE));
+
+    VirtualSMCAPI::addKey(KeyALI0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&sensor), sizeof(sensor), SmcKeyTypeAli, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyALI1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&noSensor), sizeof(noSensor), SmcKeyTypeAli, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyALRV, vsmcPlugin.data, VirtualSMCAPI::valueWithUint16(1, nullptr, SMC_KEY_ATTRIBUTE_READ));
+
+    VirtualSMCAPI::addKey(KeyALV0, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, new SMCALSValue(&currentLux, &forceBits),
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyALV1, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&emptyValue), sizeof(emptyValue), SmcKeyTypeAlv, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyLKSB, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&lkb), sizeof(lkb), SmcKeyTypeLkb, new SMCKBrdBLightValue(atkDevice),
+        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyLKSS, vsmcPlugin.data, VirtualSMCAPI::valueWithData(
+        reinterpret_cast<const SMC_DATA *>(&lks), sizeof(lks), SmcKeyTypeLks, nullptr,
+        SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+
+    VirtualSMCAPI::addKey(KeyMSLD, vsmcPlugin.data, VirtualSMCAPI::valueWithUint8(0, nullptr,
+        SMC_KEY_ATTRIBUTE_READ | SMC_KEY_ATTRIBUTE_WRITE | SMC_KEY_ATTRIBUTE_FUNCTION));
+}
+
+bool AsusFnKeys::vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier) {
+    if (sensors && vsmc) {
+        DBGLOG("asld", "got vsmc notification");
+        auto self = static_cast<AsusFnKeys *>(sensors);
+        auto ret = vsmc->callPlatformFunction(VirtualSMCAPI::SubmitPlugin, true, sensors, &self->vsmcPlugin, nullptr, nullptr);
+        if (ret == kIOReturnSuccess) {
+            DBGLOG("asld", "submitted plugin");
+
+            self->workloop = self->getWorkLoop();
+            self->poller = IOTimerEventSource::timerEventSource(self, [](OSObject *object, IOTimerEventSource *sender) {
+                auto ls = OSDynamicCast(AsusFnKeys, object);
+                if (ls) ls->refreshSensor(true);
+            });
+
+            if (!self->poller || !self->workloop) {
+                SYSLOG("asld", "failed to create poller or workloop");
+                return false;
+            }
+
+            if (self->workloop->addEventSource(self->poller) != kIOReturnSuccess) {
+                SYSLOG("asld", "failed to add timer event source to workloop");
+                return false;
+            }
+
+            if (self->poller->setTimeoutMS(SensorUpdateTimeoutMS) != kIOReturnSuccess) {
+                SYSLOG("asld", "failed to set timeout");
+                return false;
+            }
+
+            return true;
+        } else if (ret != kIOReturnUnsupported) {
+            SYSLOG("asld", "plugin submission failure %X", ret);
+        } else {
+            DBGLOG("asld", "plugin submission to non vsmc");
+        }
+    } else {
+        SYSLOG("asld", "got null vsmc notification");
+    }
+
+    return false;
+}
+
+bool AsusFnKeys::refreshSensor(bool post) {
+    uint32_t lux = 0;
+    auto ret = atkDevice->evaluateInteger("ALSS", &lux);
+    if (ret != kIOReturnSuccess)
+        lux = 0xFFFFFFFF; // ACPI invalid
+
+    atomic_store_explicit(&currentLux, lux, memory_order_release);
+
+    if (post) {
+        VirtualSMCAPI::postInterrupt(SmcEventALSChange);
+        poller->setTimeoutMS(SensorUpdateTimeoutMS);
+    }
+
+    return ret == kIOReturnSuccess;
 }
 
 EXPORT extern "C" kern_return_t ADDPR(kern_start)(kmod_info_t *, void *) {
     // Report success but actually do not start and let I/O Kit unload us.
     // This works better and increases boot speed in some cases.
     PE_parse_boot_argn("liludelay", &ADDPR(debugPrintDelay), sizeof(ADDPR(debugPrintDelay)));
-    ADDPR(debugEnabled) = checkKernelArgument("-vsmcdbg");
+    ADDPR(debugEnabled) = checkKernelArgument("-asussmcdbg");
     return KERN_SUCCESS;
 }
 

@@ -182,24 +182,20 @@ const UInt8 NOTIFY_BRIGHTNESS_DOWN_MIN = 0x20;
 const UInt8 NOTIFY_BRIGHTNESS_DOWN_MAX = 0x2F;
 
 #define kDeliverNotifications "RM,deliverNotifications"
-enum
-{
-    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),       // set disable/enable touchpad (data is bool*)
-    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),       // get disable/enable touchpad (data is bool*)
-    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110),         // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
-    kKeyboardModifierKeyPressTime = iokit_vendor_specific_msg(111),  // notify of timestamp a key was pressed (data is uint64_t*)
+enum {
+    kKeyboardSetTouchStatus = iokit_vendor_specific_msg(100),        // set disable/enable touchpad (data is bool*)
+    kKeyboardGetTouchStatus = iokit_vendor_specific_msg(101),        // get disable/enable touchpad (data is bool*)
+    kKeyboardKeyPressTime = iokit_vendor_specific_msg(110),          // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
 };
 
-enum
-{
+enum {
     kevKeyboardBacklight = 1,
     kevAirplaneMode = 2,
     kevSleep = 3,
     kevTouchpad = 4,
 };
 
-enum ReportType
-{
+enum ReportType {
     none = 0,
     keyboard_input = 1,
     consumer_input = 2,
@@ -228,36 +224,35 @@ struct ALSSensor {
         ISL29003  = 4,
         Unknown7  = 7
     };
-    
+
     /**
      *  Sensor type
      */
     Type sensorType {Type::NoSensor};
-    
+
     /**
      * TRUE if no lid or if sensor works with closed lid.
      * FALSE otherwise.
      */
     bool validWhenLidClosed {false};
-    
+
     /**
      *  Possibly ID
      */
     uint8_t unknown {0};
-    
+
     /**
      * TRUE if the SIL brightness depends on this sensor's value.
      * FALSE otherwise.
      */
     bool controlSIL {false};
-    
+
     ALSSensor(Type sensorType, bool validWhenLidClosed, uint8_t unknown, bool controlSIL): sensorType(sensorType), validWhenLidClosed(validWhenLidClosed), unknown(unknown), controlSIL(controlSIL) {}
 };
 
-class AsusFnKeys : public IOService
-{
+class AsusFnKeys : public IOService {
     OSDeclareDefaultStructors(AsusFnKeys)
-    
+
     /**
      *  Key name definitions for VirtualSMC
      */
@@ -270,7 +265,7 @@ class AsusFnKeys : public IOService
     static constexpr SMC_KEY KeyLKSB = SMC_MAKE_IDENTIFIER('L','K','S','B');
     static constexpr SMC_KEY KeyLKSS = SMC_MAKE_IDENTIFIER('L','K','S','S');
     static constexpr SMC_KEY KeyMSLD = SMC_MAKE_IDENTIFIER('M','S','L','D');
-    
+
     /**
      *  Registered plugin instance
      */
@@ -279,10 +274,10 @@ class AsusFnKeys : public IOService
         parseModuleVersion(xStringify(MODULE_VERSION)),
         VirtualSMCAPI::Version,
     };
-    
+
 public:
     virtual IOReturn message(UInt32 type, IOService * provider, void * argument) override;
-    
+
     // standard IOKit methods
     virtual bool init(OSDictionary *dictionary = 0) override;
     virtual bool start(IOService *provider) override;
@@ -291,87 +286,126 @@ public:
     
     //power management events
     virtual IOReturn setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker) override;
-    
-    /**
-     *  Submit the keys to received VirtualSMC service.
-     *
-     *  @param sensors   SMCLightSensor service
-     *  @param refCon    reference
-     *  @param vsmc      VirtualSMC service
-     *  @param notifier  created notifier
-     */
-    static bool vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier);
-    
-    /**
-     *  Refresh sensor values to inform macOS with light changes
-     *
-     *  @param post  post an SMC notification
-     */
-    bool refreshSensor(bool post);
-    
+
 protected:
-    
+
     /**
      *  Asus ATK device
      */
     IOACPIPlatformDevice * atkDevice;
-    
-    /**
-     *  Virtual keyboard device
-     */
-    VirtualHIDKeyboard *_virtualKBrd;
-    
-    /**
-     *  Used notifications to user-space daemon
-     */
-    KernEventServer kev;
-    
+
     /**
      *  Current lux value obtained from ACPI
      */
     _Atomic(uint32_t) currentLux;
-    
+
     /**
      *  Supported ALS bits
      */
     ALSForceBits forceBits;
-    
+
     /**
      *  VirtualSMC service registration notifier
      */
     IONotifier *vsmcNotifier {nullptr};
-    
+
     /**
      *  A workloop in charge of handling timer events with requests.
      */
     IOWorkLoop *workloop {nullptr};
-    
+
+    /**
+     *  Executes an action on the driver's work-loop
+     */
+    IOCommandGate* command_gate;
+
     /**
      *  Workloop timer event source for status updates
      */
     IOTimerEventSource *poller {nullptr};
-    
+
     /**
      *  Interrupt submission timeout
      */
     static constexpr uint32_t SensorUpdateTimeoutMS {1000};
-    
+
+    /**
+     *  Send commands to user-space daemon
+     */
+    KernEventServer kev;
+
+    /**
+     *  Virtual keyboard device
+     */
+    VirtualHIDKeyboard *_virtualKBrd;
+
+    karabiner_virtual_hid_device::hid_report::keyboard_input kbreport;
+    karabiner_virtual_hid_device::hid_report::apple_vendor_top_case_input tcreport;
+
+    /**
+     *  Map Fn key events to Apple keyboard codes
+     */
+    static const FnKeysKeyMap keyMap[];
+
+    /**
+     *  Touchpad enabled status
+     */
+    bool touchpadEnabled {true};
+
+    /**
+     *  Keyboard backlight availability
+     */
+    bool hasKeybrdBLight {false};
+
+    /**
+     *  ALS availability
+     */
+    bool hasALSensor {false};
+
+    /**
+     *  ALS enabled status
+     */
+    bool isALSenabled {false};
+
+    /**
+     *  Backlight status (Fn+F7)
+     */
+    bool isPanelBackLightOn {true};
+
     OSDictionary * properties;
-    
+
     OSDictionary* getDictByUUID(const char * guid);
-    IOReturn enableFnKeyEvents(const char * guid, UInt32 methodID);
-    
+
+    /**
+     *  Initialize virtual HID keyboard
+     */
+    void initVirtualKeyboard();
+
+    /**
+     *  Check ALS and keyboard backlight availability
+     */
     void checkKBALS();
-    void enableEvent();
-    void disableEvent();
-    
+
+    /**
+     *  Handle message from ATK
+     */
     void handleMessage(int code);
+
+    /**
+     *  Simulate keyboard events, taken from Karabiner-Elements
+     */
     IOReturn postKeyboardInputReport(const void* report, uint32_t reportSize);
-    IOReturn resetVirtualHIDKeyboard(void);
+
+    /**
+     *  Process keyboard events
+     */
     void processFnKeyEvents(int code, int bLoopCount);
-    
-    void enableALS(bool state);
-    
+
+    /**
+     *  Enable/Disable ALS sensor
+     */
+    void toggleALS(bool state);
+
     /**
      *  Brightness
      */
@@ -379,32 +413,56 @@ protected:
     char backlightEntry[1000];
     int checkBacklightEntry();
     int findBacklightEntry();
+
+    /**
+     *  Reading AppleBezel Values from Apple Backlight Panel driver for controlling the bezel levels
+     */
     void readPanelBrightnessValue();
-    
+
     void getDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDeviceStatus(const char * guid, UInt32 methodId, UInt32 deviceId, UInt32 *status);
     void setDevice(const char * guid, UInt32 methodId, UInt32 *status);
-    
+
+    /**
+     *  Send notifications to 3rd-party drivers (eg. VoodooI2C)
+     */
+    IONotifier* _publishNotify;
+    IONotifier* _terminateNotify;
+    OSSet* _notificationServices;
+    void registerNotifications(void);
     void notificationHandlerGated(IOService * newService, IONotifier * notifier);
     bool notificationHandler(void * refCon, IOService * newService, IONotifier * notifier);
     void dispatchMessageGated(int* message, void* data);
     void dispatchMessage(int message, void* data);
-    
-    static const FnKeysKeyMap keyMap[];
-    
-    bool   touchpadEnabled {true};
-    bool   hasALSensor {false}, isALSenabled {false};
-    bool   isPanelBackLightOn {true};
-    bool   hasKeybrdBLight {false};
-    
-    IOCommandGate* command_gate;
-    
-    IONotifier* _publishNotify;
-    IONotifier* _terminateNotify;
-    OSSet* _notificationServices;
-    
+
+    /**
+     *  Register ourself as a VirtualSMC plugin
+     */
+    void registerVSMC(void);
+
+    /**
+     *  Submit the keys to received VirtualSMC service.
+     *
+     *  @param sensors   AsusFnKeys service
+     *  @param refCon    reference
+     *  @param vsmc      VirtualSMC service
+     *  @param notifier  created notifier
+     */
+    static bool vsmcNotificationHandler(void *sensors, void *refCon, IOService *vsmc, IONotifier *notifier);
+
+    /**
+     *  Refresh sensor values to inform macOS with light changes
+     *
+     *  @param post  post an SMC notification
+     */
+    bool refreshSensor(bool post);
+
 private:
+    /**
+     *  Parse the _WDG method for the GUID data blocks
+     */
     int parse_wdg(OSDictionary *dict);
+
     OSString *flagsToStr(UInt8 flags);
     void wmi_wdg2reg(struct guid_block *g, OSArray *array, OSArray *dataArray);
     OSDictionary * readDataBlock(char *str);
@@ -413,7 +471,7 @@ private:
     void wmi_dump_wdg(struct guid_block *g);
     int wmi_parse_hexbyte(const UInt8 *src);
     void wmi_swap_bytes(UInt8 *src, UInt8 *dest);
-    
+
 };
 
 #endif //_AsusFnKeys_h
